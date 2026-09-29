@@ -1,0 +1,2801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CandyEstimator SitePro - Daily Site Productivity & Profit/Loss System</title>
+  <!-- Tailwind CSS (100% Offline & Local) -->
+  <script src="tailwind.min.js"></script>
+  <!-- Verified Local Libraries (Zero Network Lag, Works 100% Offline) -->
+  <script src="lucide.min.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script src="chart.umd.js"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ======================================================== -->
+  <!-- DEDICATED FULL-SCREEN LOGIN GATEWAY                      -->
+  <!-- ======================================================== -->
+  <div id="screen-login" class="min-h-screen flex items-center justify-center px-4 py-8 relative">
+    <div class="w-full max-w-md login-card-glass rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col gap-6 text-white border border-sky-500/20">
+      
+      <!-- Brand & Header -->
+      <div class="text-center flex flex-col items-center gap-2">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-sky-500/30">
+          <i data-lucide="bar-chart-2" class="w-8 h-8 text-white"></i>
+        </div>
+        <h1 class="text-xl font-extrabold tracking-tight text-white mt-1">CandyEstimator <span class="text-sky-400">SitePro</span></h1>
+        <p class="text-xs text-slate-400 max-w-xs">Daily Civil &amp; Landscape Productivity Intelligence &amp; Cost Control System</p>
+      </div>
+
+      <!-- Login Form -->
+      <form onsubmit="handleLoginScreenSubmit(event)" class="space-y-4">
+        <div id="login-screen-error" class="hidden px-3.5 py-2.5 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-semibold flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+          <span id="login-screen-error-text">Invalid credentials</span>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 text-xs font-semibold mb-1.5">User ID / Username</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+            <input type="text" id="inp-login-screen-user" placeholder="e.g. admin1 or user1" required
+              class="w-full pl-10 pr-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-slate-300 text-xs font-semibold">Password</label>
+            <button type="button" onclick="togglePasswordVisibility('inp-login-screen-pass', 'btn-toggle-login-pass')" id="btn-toggle-login-pass" class="text-[11px] text-sky-400 hover:text-sky-300 cursor-pointer">Show</button>
+          </div>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+            <input type="password" id="inp-login-screen-pass" placeholder="Enter password" required
+              class="w-full pl-10 pr-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all">
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold rounded-xl shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs mt-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>Sign In to Workspace</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MAIN APPLICATION WORKSPACE (Hidden until signed in)       -->
+  <!-- ======================================================== -->
+  <div id="screen-app" class="flex-1 flex flex-col min-h-screen">
+
+  <!-- ========================================== -->
+  <!-- TOP EXECUTIVE NAVBAR & PROJECT SELECTOR    -->
+  <!-- ========================================== -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
+    <div class="max-w-[1920px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand, 3-Dot Control Menu & Project Switcher -->
+      <div class="flex items-center space-x-2.5 sm:space-x-3.5">
+        
+        <!-- TOP-LEFT 3-DOT MASTER CONTROL MENU -->
+        <div class="relative" id="top-control-menu-container">
+          <button id="btn-top-menu" type="button" onclick="toggleTopControlMenu(event)" class="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer flex items-center justify-center border border-slate-700/80 bg-slate-800/60 shadow-sm" title="Website Master Controls & Access">
+            <i data-lucide="more-vertical" class="w-5 h-5 text-sky-400"></i>
+          </button>
+          
+          <div id="menu-top-control" style="display: none;" onclick="event.stopPropagation()" class="top-control-menu absolute left-0 mt-2 w-84 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 p-3 z-50">
+            <!-- Active User & Role Header -->
+            <div class="p-3 rounded-xl bg-slate-800/90 border border-slate-700 mb-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-2.5 truncate">
+                <div id="top-menu-user-avatar" class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-xs shrink-0 border border-sky-500/30">
+                  AD
+                </div>
+                <div class="truncate">
+                  <span id="top-menu-user-name" class="font-bold text-xs text-white block truncate">Administrator</span>
+                  <span id="top-menu-user-role-badge" class="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase">👑 Admin</span>
+                </div>
+              </div>
+              <button onclick="openLoginModal(); closeTopControlMenu();" class="text-[11px] font-bold text-sky-300 hover:text-white px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 transition-colors cursor-pointer">
+                Switch
+              </button>
+            </div>
+
+            <!-- Access Control & Credentials (Prominent) -->
+            <div class="space-y-1 mb-2.5 pb-2.5 border-b border-slate-800 text-xs">
+              <span class="text-[10px] font-bold text-sky-400 uppercase tracking-wider px-2 block mb-1">User &amp; Password Access</span>
+              <button onclick="openManageCredentialsModal(); closeTopControlMenu();" class="w-full text-left px-2.5 py-2 rounded-lg bg-sky-950/70 hover:bg-sky-900/90 border border-sky-600/40 text-sky-200 hover:text-white flex items-center gap-2 cursor-pointer font-bold">
+                <i data-lucide="key-round" class="w-4 h-4 text-sky-400 shrink-0"></i>
+                <span>🔐 Login &amp; User Credentials</span>
+              </button>
+            </div>
+
+            <!-- Project Controls -->
+            <div class="space-y-1 mb-2.5 pb-2.5 border-b border-slate-800 text-xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block mb-1">Project Management</span>
+              <button onclick="openProjectModal(); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="folder-plus" class="w-4 h-4 text-sky-400"></i>
+                <span>+ Create New Project</span>
+              </button>
+              <button onclick="openEditProjectModal(); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-amber-300 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="edit-3" class="w-4 h-4 text-amber-400"></i>
+                <span>Edit Active Project Details</span>
+              </button>
+              <button onclick="openManageProjectsModal(); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="folder-cog" class="w-4 h-4 text-indigo-400"></i>
+                <span>Manage / Remove Projects</span>
+              </button>
+              <button id="btn-menu-delete-project" onclick="deleteCurrentProject(); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-950/60 text-rose-300 hover:text-rose-200 flex items-center gap-2 cursor-pointer">
+                <i data-lucide="trash-2" class="w-4 h-4 text-rose-400"></i>
+                <span>Delete Active Project</span>
+              </button>
+            </div>
+
+            <!-- Data & Save Controls -->
+            <div class="space-y-1 mb-2.5 pb-2.5 border-b border-slate-800 text-xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block mb-1">Save &amp; Backup Data</span>
+              <button onclick="manualSaveWithFeedback(); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center justify-between cursor-pointer">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="save" class="w-4 h-4 text-emerald-400"></i>
+                  <span>Save All Changes Now</span>
+                </span>
+                <span class="text-[10px] text-emerald-400 font-bold">Auto-Saved</span>
+              </button>
+              <button onclick="exportBackupJSON(); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+                <span>Download Backup (.JSON)</span>
+              </button>
+            </div>
+
+            <!-- Access Control & System Settings -->
+            <div class="space-y-1 text-xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block mb-1">System &amp; Access</span>
+              <button onclick="if (!isCurrentUserAdmin()) { showAccessDenied('manage user accounts and login settings'); } else { openSettingsModal('login'); } closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="shield-check" class="w-4 h-4 text-sky-400"></i>
+                <span>User Accounts &amp; Login Settings</span>
+              </button>
+              <button onclick="openSettingsModal('resources'); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="sliders" class="w-4 h-4 text-slate-400"></i>
+                <span>Candy Baseline Rates &amp; Settings</span>
+              </button>
+              <button onclick="if (!isCurrentUserAdmin()) { showAccessDenied('customize dashboard headings'); } else { openSettingsModal('dashboard'); } closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="layout-template" class="w-4 h-4 text-amber-400"></i>
+                <span>Dashboard &amp; Headings Customizer</span>
+              </button>
+              <button onclick="openSettingsModal('audit'); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="history" class="w-4 h-4 text-emerald-400"></i>
+                <span>Audit Trail (Who Did What)</span>
+              </button>
+              <button onclick="if (!isCurrentUserAdmin()) { showAccessDenied('access Python Code & Configuration Studio'); } else { openSettingsModal('code'); } closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2 cursor-pointer">
+                <i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i>
+                <span>Python &amp; Admin Code Studio</span>
+              </button>
+              <button onclick="logoutUser(); closeTopControlMenu();" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-rose-950/30 hover:bg-rose-900/60 text-rose-300 hover:text-rose-100 flex items-center gap-2 cursor-pointer border-t border-slate-800 pt-2 mt-1">
+                <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
+                <span>Log Out of System</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Brand Logo -->
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+          <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+        </div>
+        
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 id="header-app-title" class="text-base sm:text-lg font-bold tracking-tight text-white">CandyEstimator <span class="text-sky-400">SitePro</span></h1>
+            <span id="header-app-subtitle" class="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wide">P&amp;L Engine</span>
+          </div>
+
+          <!-- Project Selector & Quick Actions -->
+          <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium">Project:</span>
+            <select id="project-selector" onchange="handleProjectChange(this.value)" class="hidden">
+              <!-- Dynamically populated projects -->
+            </select>
+            
+            <!-- Searchable Project Dropdown with Search Box -->
+            <div class="relative searchable-dropdown" id="dropdown-top-project">
+              <button type="button" onclick="toggleSearchDropdown('dropdown-top-project')" class="bg-slate-800 hover:bg-slate-700/80 text-sky-300 border border-slate-700 rounded-md px-2.5 py-1 text-xs font-semibold focus:outline-none flex items-center justify-between gap-1.5 min-w-[190px] max-w-[270px] cursor-pointer shadow-xs">
+                <span id="label-top-project" class="truncate font-bold">Select Project</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              </button>
+              <div class="dropdown-menu absolute left-0 mt-1 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 p-2 hidden animate-in fade-in zoom-in-95 duration-100">
+                <div class="relative mb-2">
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                  <input type="text" id="search-top-projects" placeholder="Search project by name or code..." oninput="filterDropdownList('dropdown-top-project', this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                </div>
+                <div id="options-top-projects" class="space-y-1 max-h-56 overflow-y-auto pr-1"></div>
+              </div>
+            </div>
+
+            <!-- Edit Project Name & Code Button -->
+            <button id="btn-edit-project" onclick="openEditProjectModal()" class="text-[11px] text-amber-300 hover:text-white bg-amber-950/70 hover:bg-amber-900/90 px-2 py-1 rounded-md border border-amber-700/60 flex items-center gap-1 transition-colors cursor-pointer shadow-xs" title="Edit project name, code, client, or dates">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>Edit</span>
+            </button>
+            <button id="btn-add-project" onclick="openProjectModal()" class="text-[11px] text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded-md border border-slate-700 flex items-center gap-1 transition-colors cursor-pointer shadow-xs" title="Add a new project">
+              <i data-lucide="folder-plus" class="w-3.5 h-3.5 text-sky-400"></i>
+              <span>New</span>
+            </button>
+            <button id="btn-delete-project" onclick="deleteCurrentProject()" class="text-[11px] text-rose-300 hover:text-white bg-rose-950/60 hover:bg-rose-900/80 px-2 py-1 rounded-md border border-rose-800/60 flex items-center gap-1 transition-colors cursor-pointer shadow-xs" title="Remove unwanted current project">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400"></i>
+              <span>Remove</span>
+            </button>
+            <button onclick="openManageProjectsModal()" class="text-[11px] text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/80 px-2 py-1 rounded-md border border-indigo-800/60 flex items-center gap-1 transition-colors cursor-pointer shadow-xs" title="View & manage all projects">
+              <i data-lucide="list" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span>All</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Ribbon (Live Cumulative Project Financials) -->
+      <div class="hidden xl:flex items-center gap-5 px-4 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/70 font-mono-numbers text-xs">
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Total BOQ Budget</span>
+          <span id="ribbon-total-budget" class="text-sm font-bold text-slate-200">AED 0.00</span>
+        </div>
+        <div class="w-px h-7 bg-slate-700"></div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Earned Value (To-Date)</span>
+          <span id="ribbon-earned-value" class="text-sm font-bold text-sky-400">AED 0.00</span>
+        </div>
+        <div class="w-px h-7 bg-slate-700"></div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Actual Cost (To-Date)</span>
+          <span id="ribbon-actual-cost" class="text-sm font-bold text-amber-400">AED 0.00</span>
+        </div>
+        <div class="w-px h-7 bg-slate-700"></div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Net Profit / Loss</span>
+          <span id="ribbon-profit-loss" class="text-sm font-extrabold text-emerald-400">AED 0.00 (0.0%)</span>
+        </div>
+      </div>
+
+      <!-- Top Action Buttons & System State -->
+      <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+        
+        <!-- Live Auto-Save Status Ribbon -->
+        <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-mono-numbers" title="All changes are automatically saved to your local browser storage.">
+          <span id="status-save-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="status-save-text" class="text-slate-300 font-sans text-[11px]">Auto-Saved</span>
+          <button type="button" onclick="manualSaveWithFeedback()" class="text-sky-400 hover:text-sky-300 text-[10px] underline ml-1 cursor-pointer font-sans" title="Click to verify save">Save Now</button>
+        </div>
+
+        <!-- User Role Badge / Fast Switcher -->
+        <button id="nav-user-badge" onclick="openLoginModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer" title="Click to Switch User / Login">
+          <span id="nav-user-icon">👑</span>
+          <span id="nav-user-label" class="text-slate-200">Admin</span>
+        </button>
+
+        <!-- Dedicated Log Out Button -->
+        <button id="btn-logout" onclick="logoutUser()" class="px-2.5 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-700/50 text-rose-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer" title="Sign Out & Lock Workspace">
+          <i data-lucide="log-out" class="w-3.5 h-3.5 text-rose-400"></i>
+          <span>Log Out</span>
+        </button>
+
+        <button id="btn-open-settings" onclick="openSettingsModal()" class="px-3 py-2 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer">
+          <i data-lucide="settings" class="w-4 h-4 text-sky-400"></i>
+          <span>Settings</span>
+        </button>
+
+        <!-- Export Buttons Group -->
+        <div class="flex items-center rounded-lg border border-emerald-700/50 bg-emerald-950/40 overflow-hidden shadow-sm">
+          <button id="btn-export-excel" onclick="exportToExcel()" class="px-3 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-900/60 transition-colors flex items-center gap-1.5 cursor-pointer" title="Export Full Multi-Sheet Excel Workbook">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+            <span>Export Excel</span>
+          </button>
+          <div class="w-px h-5 bg-emerald-700/50"></div>
+          <button id="btn-export-csv" onclick="exportToCSV()" class="px-2 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-900/60 transition-colors cursor-pointer" title="Export Daily Logs CSV">
+            <span>CSV</span>
+          </button>
+        </div>
+
+        <!-- Add Fixed Activity (Admin Only) -->
+        <button id="btn-add-activity" onclick="openFixedActivityModal()" class="px-3.5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg transition-colors flex items-center gap-1.5 shadow-md shadow-sky-600/20 cursor-pointer">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>+ Add Fixed Activity</span>
+        </button>
+
+        <!-- Primary Daily Action -->
+        <button id="btn-log-daily" onclick="openDailyModal()" class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 rounded-lg transition-all shadow-md shadow-amber-600/30 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          <span>+ Log Daily Activity</span>
+        </button>
+
+        <!-- Explicit Save Button -->
+        <button id="btn-top-save" onclick="manualSaveWithFeedback()" class="px-3.5 py-2 text-xs font-bold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-700/70 rounded-lg transition-all shadow-sm flex items-center gap-1.5 cursor-pointer" title="Save all projects, activities and daily logs immediately to browser storage">
+          <i data-lucide="save" class="w-4 h-4 text-emerald-400"></i>
+          <span>Save</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MAIN NAVIGATION TABS                       -->
+  <!-- ========================================== -->
+  <div class="bg-white border-b border-slate-200 sticky top-[57px] z-30 shadow-xs">
+    <div class="max-w-[1920px] mx-auto px-4 sm:px-6 flex items-center justify-between overflow-x-auto gap-4 py-1.5">
+      <div class="flex items-center gap-1 text-xs font-semibold">
+        <button id="nav-dashboard" onclick="switchNavTab('dashboard')" class="nav-tab px-3.5 py-2 rounded-lg bg-sky-50 text-sky-700 font-bold border border-sky-200 flex items-center gap-2 transition-all cursor-pointer">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 text-sky-600"></i>
+          <span id="nav-label-dashboard">Dashboard &amp; Results</span>
+        </button>
+
+        <button id="nav-fixed-activities" onclick="switchNavTab('fixed')" class="nav-tab px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition-all cursor-pointer">
+          <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-600"></i>
+          <span id="nav-label-fixed">Fixed Candy Budgets (With Daily Logs Underneath)</span>
+          <span id="badge-fixed-count" class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700 font-mono-numbers">0</span>
+        </button>
+
+        <button id="nav-daily-logs" onclick="switchNavTab('daily')" class="nav-tab px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition-all cursor-pointer">
+          <i data-lucide="calendar" class="w-4 h-4 text-amber-600"></i>
+          <span id="nav-label-daily">All Daily Site Logs (Actuals)</span>
+          <span id="badge-daily-count" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-mono-numbers">0</span>
+        </button>
+
+        <button id="nav-matrix" onclick="switchNavTab('matrix')" class="nav-tab px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition-all cursor-pointer">
+          <i data-lucide="table" class="w-4 h-4 text-indigo-600"></i>
+          <span id="nav-label-matrix">Excel Template View</span>
+        </button>
+      </div>
+
+      <!-- Quick Date Helper -->
+      <div class="flex items-center gap-2 text-xs">
+        <span class="text-slate-400 font-medium hidden md:inline">Today:</span>
+        <span id="label-current-date" class="px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono-numbers text-slate-700 font-semibold">2026-09-25</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE CONTAINER                   -->
+  <!-- ========================================== -->
+  <main class="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 py-5 flex flex-col gap-6">
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: EXECUTIVE DASHBOARD & SMART SOLUTIONS (RESULTS)  -->
+    <!-- ======================================================== -->
+    <div id="section-dashboard" class="flex flex-col gap-5">
+      
+      <!-- ======================================================== -->
+      <!-- DASHBOARD DATE FILTER & VIEW CONTROLLER BAR              -->
+      <!-- ======================================================== -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        
+        <!-- Left: Date Selection Controls -->
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
+              <i data-lucide="calendar" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-slate-800 block">Dashboard Date Filter</span>
+              <span id="dashboard-active-date-badge" class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full inline-block border border-sky-200/60 font-mono-numbers">
+                Viewing: Overall (All Dates)
+              </span>
+            </div>
+          </div>
+
+          <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
+
+          <!-- Date Picker Input -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="relative">
+              <input type="date" id="dashboard-date-picker" onchange="handleDashboardDateChange(this.value)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono-numbers text-slate-800 bg-white hover:border-slate-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none shadow-2xs">
+            </div>
+
+            <!-- Quick Filter Presets -->
+            <button type="button" onclick="setDashboardDateFilter('ALL')" id="btn-dash-date-all" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-sky-600 bg-sky-600 text-white shadow-xs hover:bg-sky-700 transition-colors cursor-pointer">
+              Overall (All Dates)
+            </button>
+            <button type="button" onclick="setDashboardDateFilter('TODAY')" id="btn-dash-date-today" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">
+              Today
+            </button>
+            <button type="button" onclick="setDashboardDateFilter('LATEST')" id="btn-dash-date-latest" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">
+              Latest Entry
+            </button>
+
+            <!-- Dropdown of logged dates -->
+            <select id="dashboard-log-dates-select" onchange="handleDashboardDateChange(this.value)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs text-slate-700 bg-white hover:border-slate-400 focus:ring-2 focus:ring-sky-500 outline-none shadow-2xs cursor-pointer">
+              <option value="ALL">-- Select Logged Date --</option>
+            </select>
+
+            <!-- Previous / Next Date Step Buttons -->
+            <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+              <button type="button" onclick="navigateDashboardDate(-1)" class="p-1 text-slate-600 hover:text-slate-900 rounded hover:bg-white cursor-pointer" title="Previous recorded date">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              </button>
+              <button type="button" onclick="navigateDashboardDate(1)" class="p-1 text-slate-600 hover:text-slate-900 rounded hover:bg-white cursor-pointer" title="Next recorded date">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: View Mode Toggle -->
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-slate-500 hidden md:inline">Display View:</span>
+          <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-semibold">
+            <button type="button" id="btn-dash-view-both" onclick="setDashboardDisplayMode('both')" class="px-2.5 py-1 rounded-md bg-white text-slate-900 shadow-2xs cursor-pointer" title="Show both Chosen Date and Overall Project metrics">
+              Dual View (Date + Overall)
+            </button>
+            <button type="button" id="btn-dash-view-date" onclick="setDashboardDisplayMode('date')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 cursor-pointer" title="Focus on Chosen Date metrics only">
+              Date Only
+            </button>
+            <button type="button" id="btn-dash-view-overall" onclick="setDashboardDisplayMode('overall')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 cursor-pointer" title="Focus on Overall Project lifetime metrics">
+              Overall Only
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 1A: CHOSEN DATE RESULTS PANEL                    -->
+      <!-- ======================================================== -->
+      <div id="dashboard-date-results-panel" class="flex flex-col gap-4">
+        
+        <!-- Section Header Banner for Chosen Date -->
+        <div class="bg-gradient-to-r from-sky-50 via-indigo-50/50 to-slate-50 border border-sky-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-sky-600/20">
+              <i data-lucide="calendar-range" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-extrabold text-slate-900">Performance Results for Date:</h3>
+                <span id="dash-date-heading-label" class="px-2.5 py-0.5 rounded-lg bg-sky-600 text-white font-mono font-bold text-xs">2026-09-25</span>
+                <span id="dash-date-entries-badge" class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[11px] font-bold">3 Logged Activities</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-0.5">Daily site execution output, earned value, actual spend, and profit/loss recorded for this specific date.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="openDailyModalWithDate(appState.dashboardFilterDate)" class="px-3 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-lg shadow-sm inline-flex items-center gap-1.5 transition-colors cursor-pointer">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>+ Log Activity for This Date</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 KPI CARDS FOR CHOSEN DATE -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Date KPI 1: Daily Profit / Loss -->
+          <div id="date-card-pnl" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden">
+            <div class="relative z-10">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Daily Profit / Loss</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="date-kpi-pnl-amount" class="text-2xl font-extrabold text-emerald-600 font-mono-numbers">+AED 0.00</h2>
+                <span id="date-kpi-pnl-percentage" class="text-sm font-bold text-emerald-700 font-mono-numbers bg-emerald-100 px-2 py-0.5 rounded-full">+0.0%</span>
+              </div>
+              <p id="date-kpi-pnl-sub" class="text-xs text-slate-500 mt-1">Daily earned value vs. actual site cost</p>
+            </div>
+            <div id="date-kpi-pnl-icon" class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <i data-lucide="trending-up" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+          <!-- Date KPI 2: Daily Productivity Index (PI) -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Daily Productivity Index (PI)</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="date-kpi-productivity-index" class="text-2xl font-extrabold text-sky-600 font-mono-numbers">1.00</h2>
+                <span id="date-kpi-productivity-label" class="text-xs font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">On Target</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Daily output ratio (Budget Unit Rate ÷ Actual Unit Cost)</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+              <i data-lucide="gauge" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+          <!-- Date KPI 3: Daily Physical Output Volume -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Daily Executed Output</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="date-kpi-output-qty" class="text-2xl font-extrabold text-slate-900 font-mono-numbers">0 Units</h2>
+                <span id="date-kpi-activities-count" class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">0 Activities</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Cumulative physical work delivered on this date</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <i data-lucide="layers" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+          <!-- Date KPI 4: Daily Actual Cost & Breakdown -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Daily Actual Expenditure</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="date-kpi-cost-amount" class="text-2xl font-extrabold text-slate-900 font-mono-numbers">AED 0.00</h2>
+                <span id="date-kpi-earned-amount" class="text-xs font-bold text-slate-600 font-mono-numbers">Earned: AED 0.00</span>
+              </div>
+              <p id="date-kpi-cost-split" class="text-xs text-slate-500 mt-1">Labour: AED 0.00 | Plant: AED 0.00</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <i data-lucide="wallet" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ACTIVITIES EXECUTED ON THIS DATE (TABLE) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div class="p-3.5 border-b border-slate-200 bg-slate-50/80 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-sky-600 inline-block"></span>
+              <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">
+                Activities Executed on <span id="dash-date-table-title" class="font-mono text-sky-700 font-black">2026-09-25</span>
+              </h4>
+              <span id="dash-date-table-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">
+                0 Records
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-500 font-medium">Click any row to inspect or modify site log</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono-numbers">
+              <thead>
+                <tr class="bg-slate-100/70 text-slate-600 font-semibold border-b border-slate-200 text-[11px]">
+                  <th class="py-2.5 px-3 text-center">#</th>
+                  <th class="py-2.5 px-3">Candy Code</th>
+                  <th class="py-2.5 px-2 text-center">Div</th>
+                  <th class="py-2.5 px-4 font-sans">Sub-Activity Description</th>
+                  <th class="py-2.5 px-3 text-right">Output Qty</th>
+                  <th class="py-2.5 px-3 text-right">Actual Cost</th>
+                  <th class="py-2.5 px-3 text-right">Candy Rate</th>
+                  <th class="py-2.5 px-3 text-right">Earned Budget</th>
+                  <th class="py-2.5 px-3 text-right">Daily P/L</th>
+                  <th class="py-2.5 px-3 text-center">Daily P/L %</th>
+                  <th class="py-2.5 px-3 text-center">PI</th>
+                  <th class="py-2.5 px-3 text-center">Status / Action</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-date-activities-tbody" class="divide-y divide-slate-100">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SECTION 1B: OVERALL PROJECT PERFORMANCE PANEL            -->
+      <!-- ======================================================== -->
+      <div id="dashboard-overall-results-panel" class="flex flex-col gap-4">
+        
+        <!-- Section Header Banner for Overall Project Performance -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-md">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-400/30 flex items-center justify-center shrink-0">
+              <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-extrabold text-white">Overall Project Contract Performance</h3>
+                <span class="px-2 py-0.5 rounded-full bg-slate-700/80 text-sky-300 text-[11px] font-bold border border-slate-600">
+                  Full Project Lifetime
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 mt-0.5">Contract Candy Baseline BOQ budget, cumulative earned value, total spend, and overall productivity to date.</p>
+            </div>
+          </div>
+
+          <!-- Quick Contract Overview Numbers -->
+          <div class="flex items-center gap-3 text-xs flex-wrap font-mono-numbers">
+            <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Budget:</span>
+              <span id="dash-overall-header-budget" class="text-white font-extrabold">AED 0.00</span>
+            </div>
+            <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Earned:</span>
+              <span id="dash-overall-header-earned" class="text-sky-300 font-extrabold">AED 0.00</span>
+            </div>
+            <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Spent:</span>
+              <span id="dash-overall-header-spent" class="text-amber-300 font-extrabold">AED 0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXECUTIVE KPI CARDS ROW (OVERALL) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- KPI 1: Profit / Loss % & Amount -->
+          <div id="card-pnl" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden">
+            <div class="relative z-10">
+              <span id="kpi-card1-title" class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Net Profit / Loss Status</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="kpi-pnl-amount" class="text-2xl font-extrabold text-emerald-600 font-mono-numbers">+AED 0.00</h2>
+                <span id="kpi-pnl-percentage" class="text-sm font-bold text-emerald-700 font-mono-numbers bg-emerald-100 px-2 py-0.5 rounded-full">+0.0%</span>
+              </div>
+              <p id="kpi-card1-sub" class="text-xs text-slate-500 mt-1">Earned budget vs actual site expenditure</p>
+            </div>
+            <div id="kpi-pnl-icon" class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <i data-lucide="trending-up" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+          <!-- KPI 2: Overall Productivity Index (CPI) -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <span id="kpi-card2-title" class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Site Productivity Index (PI)</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="kpi-productivity-index" class="text-2xl font-extrabold text-sky-600 font-mono-numbers">1.00</h2>
+                <span id="kpi-productivity-label" class="text-xs font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">On Target</span>
+              </div>
+              <p id="kpi-card2-sub" class="text-xs text-slate-500 mt-1">Output efficiency ratio (&gt;1.0 = Efficient)</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+              <i data-lucide="gauge" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+          <!-- KPI 3: Physical Work Completed -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <span id="kpi-card3-title" class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Physical Progress Completed</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="kpi-progress-percent" class="text-2xl font-extrabold text-slate-900 font-mono-numbers">0.0%</h2>
+                <span id="kpi-progress-ratio" class="text-xs text-slate-500 font-mono-numbers">0 / 0</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-48 bg-slate-100 h-2 rounded-full mt-2 overflow-hidden border border-slate-200">
+                <div id="kpi-progress-bar" class="bg-sky-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <p id="kpi-card3-sub" class="text-xs text-slate-500 mt-1">Total executed vs contract BOQ volume</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <i data-lucide="check-circle" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+          <!-- KPI 4: Project Total Spend vs Budget -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <span id="kpi-card4-title" class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Today's Daily Output Spend</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <h2 id="kpi-today-cost" class="text-2xl font-extrabold text-slate-900 font-mono-numbers">AED 0.00</h2>
+                <span id="kpi-today-pnl" class="text-xs font-bold text-emerald-700 font-mono-numbers">+AED 0.00</span>
+              </div>
+              <p id="kpi-card4-sub" class="text-xs text-slate-500 mt-1">Actual labour &amp; machinery spent today</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <i data-lucide="calendar-check" class="w-7 h-7"></i>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- SMART SOLUTIONS & LOSS ALERT ADVISORY                    -->
+      <!-- ======================================================== -->
+      <div id="solutions-container" class="flex flex-col gap-4">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+
+      <!-- CHARTS ROW: FINANCIAL PERFORMANCE & PRODUCTIVITY TREND -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        
+        <!-- Chart 1: Budget Earned Value vs Actual Spent -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="line-chart" class="w-4 h-4 text-sky-600"></i>
+                <span>Earned Value vs. Actual Cost Performance</span>
+              </h3>
+              <p class="text-xs text-slate-500">Cumulative budget earned through completed work vs. actual site spend</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[260px]">
+            <canvas id="chart-earned-vs-actual"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Daily Productivity Index by Date -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-600"></i>
+                <span>Daily Profit / Loss % by Sub-Activity</span>
+              </h3>
+              <p class="text-xs text-slate-500">Comparing actual daily unit costs against budgeted Candy standard</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[260px]">
+            <canvas id="chart-pnl-by-activity"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: FIXED ACTIVITY BUDGETS (WITH DAILY LOGS UNDER)    -->
+    <!-- ======================================================== -->
+    <div id="section-fixed-activities" class="hidden flex flex-col gap-4">
+      
+      <!-- Top Action Bar for Fixed Activities -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="clipboard-list" class="w-5 h-5 text-emerald-600"></i>
+            <span>Fixed Activity Budgets (Candy Baseline)</span>
+          </h3>
+          <p class="text-xs text-slate-500">Each fixed activity contains its own daily actual logs underneath. Click any row or &quot;Daily Logs&quot; to expand.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Search input -->
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+            <input type="text" id="search-fixed" oninput="handleFixedSearch(this.value)" placeholder="Search Activity or Code..." class="pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/20 w-48 sm:w-64">
+          </div>
+
+          <!-- Add Button -->
+          <button id="btn-add-activity-2" onclick="openFixedActivityModal()" class="px-3.5 py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>+ Add Fixed Activity</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Master Fixed Activities Table with Expandable Daily Logs -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                <th class="py-3 px-3 w-10 text-center">#</th>
+                <th class="py-3 px-3">Candy Code</th>
+                <th class="py-3 px-2">Div</th>
+                <th class="py-3 px-4">Sub Activity Description</th>
+                <th class="py-3 px-2 text-center">Unit</th>
+                <th class="py-3 px-3 text-right">BOQ Qty</th>
+                <th class="py-3 px-3 text-right">Budget Unit Rate</th>
+                <th class="py-3 px-3 text-right">Total Budget</th>
+                <th class="py-3 px-3 text-right bg-sky-50/50">Completed Qty</th>
+                <th class="py-3 px-3 text-center">% Done</th>
+                <th class="py-3 px-3 text-right">Actual Cost</th>
+                <th class="py-3 px-3 text-right font-bold">Profit / Loss</th>
+                <th class="py-3 px-3 text-center w-48">Daily Logs &amp; Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fixed-activities-tbody" class="divide-y divide-slate-100 font-mono-numbers">
+              <!-- Rendered dynamically by app.js with expandable sub-rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: DAILY SITE ACTIVITY LOGS (ACTUALS TRACKER)        -->
+    <!-- ======================================================== -->
+    <div id="section-daily-logs" class="hidden flex flex-col gap-4">
+      
+      <!-- Top Action Bar for Daily Logs -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-amber-600"></i>
+            <span>All Daily Site Execution Logs (Actual Productivity)</span>
+          </h3>
+          <p class="text-xs text-slate-500">Record daily quantities executed and actual manpower &amp; machinery used to detect loss or profit</p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Searchable Activity Filter Dropdown -->
+          <div class="relative searchable-dropdown" id="dropdown-filter-daily-act">
+            <button type="button" onclick="toggleSearchDropdown('dropdown-filter-daily-act')" class="px-3 py-1.5 text-xs bg-slate-50 hover:bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold flex items-center justify-between gap-2 min-w-[240px] max-w-[320px] shadow-xs cursor-pointer">
+              <div class="flex items-center gap-1.5 truncate">
+                <i data-lucide="filter" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+                <span id="label-filter-daily-act" class="truncate text-slate-800">All Sub-Activities</span>
+              </div>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+            </button>
+            <div id="menu-filter-daily-act" style="display: none;" class="dropdown-menu absolute right-0 sm:left-0 mt-1 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 p-2 z-50">
+              <div class="relative mb-2">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                <input type="text" id="search-filter-daily-act" oninput="filterDropdownList('dropdown-filter-daily-act', this.value)" placeholder="Search sub-activity code or name..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500 text-slate-900">
+              </div>
+              <div id="options-filter-daily-act" class="dropdown-options max-h-56 overflow-y-auto space-y-0.5 text-xs pr-1">
+                <!-- Populated dynamically by app.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter by Date with All Dates helper button -->
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold">Date:</span>
+            <input type="date" id="filter-daily-date" onchange="handleDailyFilterDate(this.value)" class="text-xs bg-transparent text-slate-700 font-mono-numbers focus:outline-none cursor-pointer">
+            <button type="button" onclick="clearDailyDateFilter()" class="text-[11px] font-bold text-amber-700 hover:text-amber-800 px-1.5 py-0.5 rounded hover:bg-amber-100 transition-colors cursor-pointer" title="Reset date and show all dates">
+              All Dates
+            </button>
+          </div>
+
+          <button id="btn-log-daily-2" onclick="openDailyModal()" class="px-4 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>+ Log Daily Activity</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Daily Logs Table -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                <th class="py-3 px-3 w-10 text-center">#</th>
+                <th class="py-3 px-3">Date</th>
+                <th class="py-3 px-3">Candy Code</th>
+                <th class="py-3 px-4">Sub Activity</th>
+                <th class="py-3 px-3 text-right">Daily Output Qty</th>
+                <th class="py-3 px-3 text-right">Actual Labour</th>
+                <th class="py-3 px-3 text-right">Actual Plant</th>
+                <th class="py-3 px-3 text-right font-bold">Daily Cost</th>
+                <th class="py-3 px-3 text-right">Actual Unit Cost</th>
+                <th class="py-3 px-3 text-right">Budget Unit Rate</th>
+                <th class="py-3 px-3 text-right font-bold">Profit / Loss (AED)</th>
+                <th class="py-3 px-3 text-center font-bold">P&amp;L %</th>
+                <th class="py-3 px-3 text-center">Status</th>
+                <th class="py-3 px-3 text-center w-28">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="daily-logs-tbody" class="divide-y divide-slate-100 font-mono-numbers">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: EXCEL SPREADSHEET TEMPLATE VIEW (40+ COLUMNS)     -->
+    <!-- ======================================================== -->
+    <div id="section-matrix" class="hidden flex flex-col gap-4">
+      <!-- Excel View Header & Filters Toolbar -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="table" class="w-4 h-4 text-indigo-600"></i>
+              <span>Candy Master Spreadsheet Template Grid</span>
+            </h3>
+            <span id="matrix-counter-badge" class="px-2 py-0.5 text-[10px] font-bold bg-indigo-100 text-indigo-800 rounded">Full Candy Matrix &amp; Daily Actuals</span>
+          </div>
+          <p class="text-xs text-slate-500">Horizontal spreadsheet view showing fixed baseline norms with daily site execution logs underneath</p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Filter 1: Date Filter with Search Box & ALL Option -->
+          <div class="relative searchable-dropdown" id="dropdown-matrix-date">
+            <button type="button" onclick="toggleSearchDropdown('dropdown-matrix-date')" class="px-3 py-1.5 text-xs bg-slate-50 hover:bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold flex items-center justify-between gap-2 min-w-[210px] shadow-xs cursor-pointer">
+              <div class="flex items-center gap-1.5 truncate">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+                <span id="label-matrix-date" class="truncate font-bold text-slate-800">All Dates (All Daily Logs)</span>
+              </div>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+            </button>
+            <div id="menu-matrix-date" style="display: none;" class="dropdown-menu absolute right-0 sm:left-0 mt-1 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 p-2 z-50">
+              <div class="relative mb-2">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                <input type="text" id="search-matrix-date" oninput="filterDropdownList('dropdown-matrix-date', this.value)" placeholder="Search date..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-900">
+              </div>
+              <div id="options-matrix-date" class="dropdown-options max-h-56 overflow-y-auto space-y-0.5 text-xs pr-1">
+                <!-- Populated dynamically by app.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter 2: Activity Filter with Search Box -->
+          <div class="relative searchable-dropdown" id="dropdown-matrix-act">
+            <button type="button" onclick="toggleSearchDropdown('dropdown-matrix-act')" class="px-3 py-1.5 text-xs bg-slate-50 hover:bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold flex items-center justify-between gap-2 min-w-[210px] max-w-[300px] shadow-xs cursor-pointer">
+              <div class="flex items-center gap-1.5 truncate">
+                <i data-lucide="filter" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
+                <span id="label-matrix-act" class="truncate font-bold text-slate-800">All Activities</span>
+              </div>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+            </button>
+            <div id="menu-matrix-act" style="display: none;" class="dropdown-menu absolute right-0 mt-1 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 p-2 z-50">
+              <div class="relative mb-2">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                <input type="text" id="search-matrix-act" oninput="filterDropdownList('dropdown-matrix-act', this.value)" placeholder="Search code or activity..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-900">
+              </div>
+              <div id="options-matrix-act" class="dropdown-options max-h-56 overflow-y-auto space-y-0.5 text-xs pr-1">
+                <!-- Populated dynamically by app.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Toggle: Expand / Collapse All Daily Rows in Matrix -->
+          <button type="button" id="btn-toggle-all-matrix-logs" onclick="toggleAllMatrixLogs()" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer">
+            <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span id="label-toggle-all-matrix-logs">Collapse Daily Rows</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div class="overflow-x-auto max-h-[700px] border-t border-slate-200 text-[11px]">
+          <table class="border-collapse text-left whitespace-nowrap min-w-max font-mono-numbers">
+            <thead>
+              <!-- TIER 1: HIGH LEVEL SECTIONS -->
+              <tr class="text-white text-center text-xs font-bold tracking-wider uppercase sticky-th">
+                <th colspan="11" class="py-2.5 px-3 header-budget border-r border-slate-700 sticky-col-1">
+                  BUDGET COST BREAK DOWN FOR SUB ACTIVITY
+                </th>
+                <th colspan="9" class="py-2.5 px-3 header-labour border-r border-emerald-900">
+                  LABOUR HOURS - SUB ACTIVITY WISE
+                </th>
+                <th colspan="20" class="py-2.5 px-3 header-plant border-r border-blue-900">
+                  PLANT &amp; EQPT. HOURS - SUB ACTIVITY WISE
+                </th>
+                <th colspan="36" class="py-2.5 px-3 header-workout">
+                  CANDY BUDGET - WORK OUT QTY AND RESOURCES BUDGETED
+                </th>
+              </tr>
+
+              <!-- TIER 2: COLUMN HEADERS -->
+              <tr class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-300 text-center sticky-th top-[34px]">
+                <th class="p-2 border-r border-slate-200 sticky-col-1 bg-slate-100 w-12">S No</th>
+                <th class="p-2 border-r border-slate-200 sticky-col-2 bg-slate-100">Candy Code</th>
+                <th class="p-2 border-r border-slate-200">Division</th>
+                <th class="p-2 border-r border-slate-200">Zone</th>
+                <th class="p-2 border-r border-slate-200 text-left min-w-[240px]">Sub Activity</th>
+                <th class="p-2 border-r border-slate-200">Unit</th>
+                <th class="p-2 border-r border-slate-200 text-right">Qty</th>
+                <th class="p-2 border-r border-slate-200 text-right">Unit Rate for Labour &amp; Plant</th>
+                <th class="p-2 border-r border-slate-200 text-right">Total Labour &amp; Plant Amount</th>
+                <th class="p-2 border-r border-slate-200 text-right text-emerald-700 bg-emerald-50/50">Labour Amount</th>
+                <th class="p-2 border-r-2 border-slate-400 text-right text-sky-700 bg-sky-50/50">Plant Amount</th>
+
+                <!-- Labour Hours (9 Trades) -->
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total Helper</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total Mason</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total CH</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total Carpenter</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total Steel Fitter</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total Pipe Fitter</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total Electrician</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50/30">Total Plumber</th>
+                <th class="p-2 border-r-2 border-emerald-600 bg-emerald-50/30">Total Gardener</th>
+
+                <!-- Plant Hours (20 Equipment) -->
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total JCB</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total 6W 20m3</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Shovel 966</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total 6W 35/45m3</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Bobcat</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Boom 17m</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total 3T Roller</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total 7T w/ Crane</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total 5T w/ Crane</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total 7T</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Trailer 40ft</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Trailer Trip</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Shotcrete</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Manlift 20m</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Conc Pump</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Mobile Crane 5T</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Water Tanker</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Vibrator</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50/30">Total Pick-up 3T</th>
+                <th class="p-2 border-r-2 border-blue-600 bg-blue-50/30">Total 25T Crane</th>
+
+                <!-- Workout Qty & Resources -->
+                <th class="p-2 border-r border-slate-200 bg-amber-50">Unit</th>
+                <th class="p-2 border-r border-slate-200 bg-amber-100 font-bold">WORK OUT QTY</th>
+
+                <!-- Labour in Workout -->
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">Helper</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">Mason</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">CH</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">Carp.</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">SF</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">PF</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">Ele.</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">Plum.</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-50">Gardner</th>
+                <th class="p-2 border-r-2 border-emerald-600 bg-emerald-100 font-bold">Total Labour Cost</th>
+
+                <!-- Plant in Workout -->
+                <th class="p-2 border-r border-slate-200 bg-blue-50">JCB</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">6W 20m3</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Shovel 966</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">6W 35/45m3</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Bobcat</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Boom 17m</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">3T Roller</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">7T w/ Crane</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">5T w/ Crane</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">7T</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Trailer 40ft</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Trailer Trip</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Shotcrete</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Manlift 20m</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Conc Pump</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Mobile Crane 5T</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Water Tanker</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Vibrator</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">Pick-up 3T</th>
+                <th class="p-2 border-r border-slate-200 bg-blue-50">25T Crane</th>
+                <th class="p-2 border-r-2 border-blue-600 bg-blue-100 font-bold">Total Plant Cost</th>
+
+                <!-- Summary Columns -->
+                <th class="p-2 border-r border-slate-200 bg-orange-100 font-bold text-slate-800">Labour Cost / Unit</th>
+                <th class="p-2 border-r border-slate-200 bg-orange-100 font-bold text-slate-800">Plant Cost / Unit</th>
+                <th class="p-2 border-r border-slate-200 bg-orange-200 font-extrabold text-slate-900">Cost per Unit</th>
+                <th class="p-2 border-r border-slate-200 bg-emerald-100 font-extrabold text-emerald-900">TOTAL AMOUNT</th>
+                <th class="p-2 bg-indigo-100 font-bold text-indigo-900">SAVING / LOSS</th>
+              </tr>
+
+              <!-- TIER 3: RATES ROW -->
+              <tr class="bg-slate-200/80 text-slate-700 text-[10px] font-semibold text-center border-b border-slate-300 sticky-th top-[64px]">
+                <td colspan="11" class="p-1 border-r border-slate-300 italic text-slate-500">Resource Rates (AED/hr) &rarr;</td>
+                <td colspan="9" class="p-1 border-r-2 border-emerald-600"></td>
+                <td colspan="20" class="p-1 border-r-2 border-blue-600"></td>
+                <td colspan="2" class="p-1 border-r border-slate-300"></td>
+
+                <!-- Labour Rates -->
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">9.98</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">14.64</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">14.70</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">14.20</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">14.68</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">14.44</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">13.57</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">14.95</td>
+                <td class="p-1 border-r border-slate-300 bg-emerald-50 text-emerald-800">13.31</td>
+                <td class="p-1 border-r-2 border-emerald-600 bg-emerald-100">AED</td>
+
+                <!-- Plant Rates -->
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">61</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">73</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">114</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">73</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">46</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">75</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">45</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">75</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">69</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">50</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">72</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">660</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">97</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">35</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">35</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">55</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">106</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">15</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">40</td>
+                <td class="p-1 border-r border-slate-300 bg-blue-50 text-blue-800">95</td>
+                <td class="p-1 border-r-2 border-blue-600 bg-blue-100">AED</td>
+
+                <td colspan="5" class="p-1 bg-orange-50"></td>
+              </tr>
+            </thead>
+            <tbody id="matrix-table-body" class="divide-y divide-slate-200">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  </div> <!-- /screen-app -->
+
+  <!-- ======================================================== -->
+  <!-- MODAL 1: ADD / EDIT PROJECT (MULTI-PROJECT SUPPORT)      -->
+  <!-- ======================================================== -->
+  <div id="modal-project" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="folder-plus" class="w-5 h-5 text-sky-400"></i>
+          <h3 id="modal-project-title" class="text-base font-bold text-white">Create New Project</h3>
+        </div>
+        <button id="modal-project-close" onclick="closeProjectModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 flex flex-col gap-4 text-xs">
+        <input type="hidden" id="inp-proj-editing-id" value="">
+        <div>
+          <label class="block text-slate-700 font-semibold mb-1">Project Name *</label>
+          <input type="text" id="inp-proj-name" placeholder="e.g. Dubai Hills Estate - Soft Landscaping Phase 2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-sky-500/20">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Project Code *</label>
+            <input type="text" id="inp-proj-code" placeholder="e.g. PRJ-2026-002" class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono-numbers">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Client / Main Contractor</label>
+            <input type="text" id="inp-proj-client" placeholder="e.g. Emaar Properties" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Start Date</label>
+            <input type="date" id="inp-proj-start" class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono-numbers">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Target End Date</label>
+            <input type="date" id="inp-proj-end" class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono-numbers">
+          </div>
+        </div>
+
+        <div class="bg-sky-50 p-3 rounded-lg border border-sky-200 text-slate-700 text-xs">
+          <i data-lucide="info" class="w-4 h-4 inline text-sky-600 mr-1"></i>
+          Each project maintains its own isolated Fixed Candy activities, Daily actual site logs, and master resource hourly rates.
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-100 border-t border-slate-200 flex items-center justify-between">
+        <button id="modal-project-cancel" onclick="closeProjectModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white border border-slate-300 rounded-lg cursor-pointer">Cancel</button>
+        <button id="modal-project-save" onclick="saveProjectFromModal()" class="px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-md shadow-sky-600/30 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span id="btn-save-project-label">Save Project</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 2: ADD / EDIT FIXED CANDY ACTIVITY BUDGET          -->
+  <!-- ======================================================== -->
+  <div id="modal-activity" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
+            <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="modal-activity-title" class="text-base font-bold text-white">Configure Fixed Activity Budget (Candy Baseline)</h3>
+            <p class="text-xs text-slate-400">Baseline unit rate, manpower, and machinery budget created at project start</p>
+          </div>
+        </div>
+        <button id="modal-activity-close" onclick="closeFixedActivityModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-5 text-xs">
+        
+        <!-- Details Row -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div>
+            <label class="block text-slate-600 font-semibold mb-1">Sub-Activity Code *</label>
+            <input type="text" id="inp-code" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono-numbers font-bold" placeholder="22110001">
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-slate-600 font-semibold">Division</label>
+              <button type="button" onclick="closeFixedActivityModal(); openSettingsModal('resources');" class="text-[10px] text-sky-600 hover:text-sky-800 underline font-bold cursor-pointer">+ Master Divisions</button>
+            </div>
+            <!-- Searchable Division Dropdown -->
+            <div class="relative searchable-dropdown" id="dropdown-fixed-division">
+              <button type="button" onclick="toggleSearchDropdown('dropdown-fixed-division')" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-left flex items-center justify-between font-semibold text-slate-800 cursor-pointer shadow-xs">
+                <span id="label-fixed-division" class="truncate">SL - Soft Landscaping</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+              </button>
+              <div class="dropdown-menu absolute left-0 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 hidden animate-in fade-in zoom-in-95 duration-100">
+                <div class="relative mb-1.5">
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2"></i>
+                  <input type="text" id="search-fixed-division" placeholder="Search division..." oninput="filterDropdownList('dropdown-fixed-division', this.value)" class="w-full pl-7 pr-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-sky-500">
+                </div>
+                <div id="options-fixed-division" class="space-y-0.5 max-h-40 overflow-y-auto">
+                  <!-- Populated dynamically by populateFixedDivisionDropdown() -->
+                </div>
+                <div class="pt-2 mt-1 border-t border-slate-100 flex items-center justify-between">
+                  <button type="button" onclick="quickPromptNewDivision()" class="text-[11px] font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1 cursor-pointer">
+                    <i data-lucide="plus-circle" class="w-3 h-3"></i>
+                    <span>+ Add New Division</span>
+                  </button>
+                </div>
+              </div>
+              <input type="hidden" id="inp-division" value="SL">
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 font-semibold mb-1">Zone</label>
+            <input type="text" id="inp-zone" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg" placeholder="Zone 1">
+          </div>
+          <div>
+            <label class="block text-slate-600 font-semibold mb-1">Unit of Measurement *</label>
+            <!-- Searchable Unit Dropdown with Search Box -->
+            <div class="relative searchable-dropdown" id="dropdown-fixed-unit">
+              <button type="button" onclick="toggleSearchDropdown('dropdown-fixed-unit')" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-left flex items-center justify-between font-bold text-slate-800 cursor-pointer shadow-xs">
+                <span id="label-fixed-unit">m3</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+              </button>
+              <div class="dropdown-menu absolute left-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 hidden animate-in fade-in zoom-in-95 duration-100">
+                <div class="relative mb-1.5">
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2"></i>
+                  <input type="text" id="search-fixed-unit" placeholder="Search unit..." oninput="filterDropdownList('dropdown-fixed-unit', this.value)" class="w-full pl-7 pr-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-sky-500">
+                </div>
+                <div id="options-fixed-unit" class="space-y-0.5 max-h-40 overflow-y-auto">
+                  <!-- Populated dynamically from appState.units in app.js -->
+                </div>
+              </div>
+              <input type="hidden" id="inp-unit" value="m3">
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 font-semibold mb-1">Total BOQ Qty *</label>
+            <input type="number" step="any" id="inp-total-qty" oninput="triggerFixedModalCalculation()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono-numbers font-bold text-sky-700" placeholder="14040">
+          </div>
+          <div>
+            <label class="block text-slate-600 font-semibold mb-1">Tender / Allowable Rate</label>
+            <input type="number" step="any" id="inp-allowable-rate" oninput="triggerFixedModalCalculation()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono-numbers text-slate-700" placeholder="11.08">
+            <span id="badge-allowable-active" class="hidden text-[10px] font-bold text-amber-800 mt-1 block">★ Active Contract Rate (Directly used for Baseline Budget)</span>
+          </div>
+          <div class="sm:col-span-2 lg:col-span-6">
+            <label class="block text-slate-600 font-semibold mb-1">Sub Activity Description *</label>
+            <input type="text" id="inp-description" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg" placeholder="e.g. Red dune sand (Sweet Soil Filling) filling Ground Covers and in shrubs /SUC,grasses">
+          </div>
+        </div>
+
+        <!-- Rate Calculation Method Selector (Visible when Manual Rate is Enabled in Settings) -->
+        <div id="row-fixed-rate-mode" class="p-3 bg-amber-50/70 rounded-xl border border-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="calculator" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 text-xs block">Budget Unit Rate Method</span>
+              <span id="label-fixed-rate-method-desc" class="text-[11px] text-slate-600">Auto-calculate from gang norm hours, or directly use Tender / Allowable Rate</span>
+            </div>
+          </div>
+          <div class="inline-flex rounded-lg border border-amber-300 p-0.5 bg-white text-xs font-semibold shadow-2xs">
+            <button type="button" id="btn-rate-mode-norms" onclick="setFixedRateMode('norms')" class="px-3 py-1 rounded-md bg-amber-600 text-white font-bold shadow-2xs cursor-pointer">
+              Detailed Gang Norms
+            </button>
+            <button type="button" id="btn-rate-mode-manual" onclick="setFixedRateMode('manual')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 cursor-pointer">
+              Direct Tender / Allowable Rate
+            </button>
+          </div>
+          <input type="hidden" id="inp-fixed-rate-mode" value="norms">
+        </div>
+
+        <!-- Gang Setup -->
+        <div id="gang-setup-box" class="bg-amber-50/40 p-4 rounded-xl border border-amber-200/80 flex flex-col gap-4">
+          <div id="note-gang-optional" class="hidden text-[11px] text-amber-900 bg-amber-100/90 px-3 py-1.5 rounded-lg border border-amber-300 font-medium">
+            ★ Manual Unit Rate Mode is Active: Baseline unit rate is taken directly from Tender / Allowable Rate. Gang breakdown hours below are optional.
+          </div>
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Budgeted Gang Work-Out (Per Batch Norm)</span>
+            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <span class="text-xs font-bold text-red-700 uppercase tracking-wider flex items-center gap-1">
+                <span class="text-red-600 font-black">●</span> Main Activity (Optional / Standalone):
+              </span>
+              <!-- Searchable Main Activity Dropdown with Search Box -->
+              <div class="relative searchable-dropdown min-w-[260px] sm:min-w-[380px]" id="dropdown-fixed-main-act">
+                <button type="button" onclick="toggleSearchDropdown('dropdown-fixed-main-act')" class="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-red-700 flex items-center justify-between gap-2 shadow-xs cursor-pointer text-left">
+                  <span id="label-fixed-main-act" class="truncate font-bold text-red-700">-- Select Main Activity Description --</span>
+                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                </button>
+                <div class="dropdown-menu absolute right-0 mt-1 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 p-2 hidden animate-in fade-in zoom-in-95 duration-100">
+                  <div class="relative mb-2">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                    <input type="text" id="search-fixed-main-act" placeholder="Search Main Activity (code or description)..." oninput="filterDropdownList('dropdown-fixed-main-act', this.value)" class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                  </div>
+                  <div id="options-fixed-main-act" class="space-y-1 max-h-56 overflow-y-auto pr-1"></div>
+                  <div class="p-2 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between mt-1">
+                    <button type="button" onclick="toggleCustomMainActInput()" class="text-red-700 hover:text-red-900 font-bold underline cursor-pointer">+ Type Custom Main Activity</button>
+                    <button type="button" onclick="closeFixedActivityModal(); openSettingsModal('main-act');" class="text-amber-700 hover:text-amber-900 font-bold underline cursor-pointer">Open Settings →</button>
+                  </div>
+                </div>
+                <input type="hidden" id="inp-fixed-main-code" value="">
+                <input type="hidden" id="inp-fixed-main-desc" value="">
+                <input type="hidden" id="preset-selector" value="">
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom Main Activity Inline Row (Expandable) -->
+          <div id="row-custom-main-act" class="hidden p-3 bg-red-50/80 border border-red-200 rounded-xl flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-red-900 flex items-center gap-1">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5 text-red-600"></i>
+              <span>Custom Main Activity:</span>
+            </span>
+            <input type="text" id="inp-custom-main-code" placeholder="Code (e.g. S00147 (A,B,C))" class="w-36 px-2.5 py-1 text-xs bg-white border border-red-300 rounded font-mono font-bold text-red-700">
+            <input type="text" id="inp-custom-main-desc" placeholder="Main Description (e.g. Sweeting Sand filling...)" class="flex-1 min-w-[200px] px-2.5 py-1 text-xs bg-white border border-red-300 rounded text-slate-800">
+            <button type="button" onclick="applyCustomMainActivityInput()" class="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-xs font-bold shadow-xs cursor-pointer">Apply</button>
+            <button type="button" onclick="toggleCustomMainActInput(false)" class="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer">Cancel</button>
+          </div>
+
+          <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-amber-200">
+            <div>
+              <label class="block text-slate-700 font-bold mb-1">Work Out Batch Quantity</label>
+              <div class="flex items-center gap-1.5 font-mono-numbers">
+                <input type="number" step="any" id="inp-workout-qty" oninput="triggerFixedModalCalculation()" class="w-32 px-3 py-1.5 bg-amber-50 border border-amber-300 rounded font-bold text-amber-900" value="200">
+                <span id="label-modal-unit" class="text-slate-500 font-semibold text-xs">m3</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500">
+              Define the hours consumed by the crew to produce this batch quantity. The system automatically derives the standard unit consumption rates.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Labour Gang -->
+            <div class="bg-white p-3.5 rounded-lg border border-emerald-200 flex flex-col gap-2">
+              <div class="flex items-center justify-between pb-1.5 border-b border-emerald-100 font-bold text-emerald-800">
+                <span>Budgeted Labour Crew</span>
+                <span id="badge-workout-labour-cost" class="font-mono-numbers text-xs text-emerald-700">AED 0.00</span>
+              </div>
+              <div id="modal-labour-container" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
+              
+              <!-- Inline Add Labour Trade to this Activity -->
+              <div class="mt-2 pt-2 border-t border-emerald-100">
+                <button type="button" onclick="toggleAddLabourInline()" class="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  <span>+ Add Different Labour Trade to this Activity</span>
+                </button>
+                <div id="inline-add-labour-form" class="hidden mt-2 p-2.5 bg-emerald-50/80 rounded-lg border border-emerald-200 space-y-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="inp-inline-labour-name" placeholder="Trade (e.g. Scaffolder)" class="text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900">
+                    <input type="text" id="inp-inline-labour-short" placeholder="Short (e.g. Scaf)" class="text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 font-bold">
+                    <input type="number" step="0.5" id="inp-inline-labour-rate" placeholder="AED/hr (e.g. 14.50)" class="text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded font-mono-numbers font-bold">
+                  </div>
+                  <div class="flex items-center justify-end gap-2">
+                    <button type="button" onclick="toggleAddLabourInline(false)" class="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer">Cancel</button>
+                    <button type="button" onclick="addLabourInlineToActivity()" class="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded-md shadow-xs cursor-pointer">Add Trade</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plant Gang -->
+            <div class="bg-white p-3.5 rounded-lg border border-blue-200 flex flex-col gap-2">
+              <div class="flex items-center justify-between pb-1.5 border-b border-blue-100 font-bold text-blue-800">
+                <span>Budgeted Machinery &amp; Equipment</span>
+                <span id="badge-workout-plant-cost" class="font-mono-numbers text-xs text-blue-700">AED 0.00</span>
+              </div>
+              <div id="modal-plant-container" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
+
+              <!-- Inline Add Plant / Equipment to this Activity -->
+              <div class="mt-2 pt-2 border-t border-blue-100">
+                <button type="button" onclick="toggleAddPlantInline()" class="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-blue-600"></i>
+                  <span>+ Add Different Machinery / Equipment to this Activity</span>
+                </button>
+                <div id="inline-add-plant-form" class="hidden mt-2 p-2.5 bg-blue-50/80 rounded-lg border border-blue-200 space-y-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <input type="text" id="inp-inline-plant-name" placeholder="Name (e.g. Boom Loader 17m)" class="text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 sm:col-span-2">
+                    <input type="text" id="inp-inline-plant-short" placeholder="Short (e.g. Boom 17m)" class="text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 font-bold">
+                    <input type="number" step="0.5" id="inp-inline-plant-rate" placeholder="AED/hr (e.g. 75.00)" class="text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded font-mono-numbers font-bold">
+                  </div>
+                  <div class="flex items-center justify-end gap-2">
+                    <button type="button" onclick="toggleAddPlantInline(false)" class="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer">Cancel</button>
+                    <button type="button" onclick="addPlantInlineToActivity()" class="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-md shadow-xs cursor-pointer">Add Machine</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculated Live Preview -->
+        <div class="bg-slate-900 text-white p-4 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono-numbers">
+          <div class="bg-slate-800/80 p-2 rounded-lg">
+            <span class="block text-[10px] text-slate-400 uppercase">Unit Labour Rate</span>
+            <span id="prev-unit-labour" class="text-sm font-bold text-emerald-400">AED 0.00</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-lg">
+            <span class="block text-[10px] text-slate-400 uppercase">Unit Plant Rate</span>
+            <span id="prev-unit-plant" class="text-sm font-bold text-amber-400">AED 0.00</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-lg">
+            <span class="block text-[10px] text-slate-400 uppercase">Total Budget Unit Rate</span>
+            <span id="prev-unit-total" class="text-base font-extrabold text-white">AED 0.00</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-lg ring-1 ring-emerald-500/40">
+            <span class="block text-[10px] text-slate-400 uppercase">Total Scaled Budget</span>
+            <span id="prev-total-amount" class="text-base font-extrabold text-emerald-400">AED 0.00</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-100 border-t border-slate-200 flex items-center justify-between">
+        <button id="modal-activity-cancel" onclick="closeFixedActivityModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg cursor-pointer">Cancel</button>
+        <button id="modal-activity-save" onclick="saveFixedActivityFromModal()" class="px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-md shadow-sky-600/30 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Save Fixed Activity</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 3: LOG DAILY SITE ACTUAL ACTIVITY (SITE PROGRESS)  -->
+  <!-- ======================================================== -->
+  <div id="modal-daily" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="modal-daily-title" class="text-base font-bold text-white">Log Daily Site Execution &amp; Productivity</h3>
+            <p class="text-xs text-slate-400">Record daily quantity done and actual hours used to check Profit / Loss in real-time</p>
+          </div>
+        </div>
+        <button id="modal-daily-close" onclick="closeDailyModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-5 text-xs">
+        
+        <!-- Selection Row -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Execution Date *</label>
+            <input type="date" id="inp-daily-date" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono-numbers">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-slate-700 font-semibold mb-1">Select Fixed Sub-Activity *</label>
+            <div class="relative searchable-dropdown" id="dropdown-modal-daily-act">
+              <button type="button" onclick="toggleSearchDropdown('dropdown-modal-daily-act')" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-medium text-slate-800 flex items-center justify-between gap-2 shadow-xs cursor-pointer text-left">
+                <span id="label-modal-daily-act" class="truncate font-semibold text-slate-900">-- Select Sub-Activity --</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+              </button>
+              <div id="menu-modal-daily-act" style="display: none;" class="dropdown-menu absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 p-2 z-50">
+                <div class="relative mb-2">
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                  <input type="text" id="search-modal-daily-act" oninput="filterDropdownList('dropdown-modal-daily-act', this.value)" placeholder="Search sub-activity code or name..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500 text-slate-900">
+                </div>
+                <div id="options-modal-daily-act" class="dropdown-options max-h-56 overflow-y-auto space-y-1 text-xs pr-1">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+            <input type="hidden" id="inp-daily-activity-id" value="">
+          </div>
+        </div>
+
+        <!-- Actual Output Volume -->
+        <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-200 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <label class="block text-slate-800 font-bold mb-1">Actual Quantity Executed Today *</label>
+            <div class="flex items-center gap-2 font-mono-numbers">
+              <input type="number" step="any" min="0.01" id="inp-daily-qty" oninput="triggerDailyModalCalculation()" placeholder="e.g. 180" class="w-40 px-3 py-2 bg-white border border-amber-300 rounded-lg font-extrabold text-amber-950 text-sm">
+              <span id="label-daily-unit" class="text-slate-700 font-bold text-xs">m3</span>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <span class="text-slate-500 block text-[11px]">Candy Budget Standard Unit Rate</span>
+            <span id="label-daily-budget-rate" class="text-base font-extrabold text-slate-900 font-mono-numbers">AED 0.00 / unit</span>
+          </div>
+        </div>
+
+        <!-- Daily Actual Cost Method Selector (Visible when Manual Daily Rate is Enabled in Settings) -->
+        <div id="row-daily-cost-mode" class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-700 flex items-center justify-center font-bold text-xs">
+              <i data-lucide="coins" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 text-xs block">Daily Actual Cost Method</span>
+              <span id="label-daily-cost-method-desc" class="text-[11px] text-slate-500">Calculate from individual worker/machine hours, or enter actual rate/spend directly</span>
+            </div>
+          </div>
+          <div class="inline-flex rounded-lg border border-slate-300 p-0.5 bg-white text-xs font-semibold shadow-2xs">
+            <button type="button" id="btn-daily-cost-mode-gang" onclick="setDailyCostMode('gang')" class="px-3 py-1 rounded-md bg-sky-600 text-white font-bold shadow-2xs cursor-pointer">
+              Detailed Gang Hours
+            </button>
+            <button type="button" id="btn-daily-cost-mode-manual" onclick="setDailyCostMode('manual')" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 cursor-pointer">
+              Direct Actual Rate / Spend
+            </button>
+          </div>
+          <input type="hidden" id="inp-daily-cost-mode" value="gang">
+        </div>
+
+        <!-- Direct Manual Actual Cost Input Section (shown when mode === 'manual') -->
+        <div id="row-daily-manual-inputs" class="hidden p-4 rounded-xl bg-amber-50/70 border border-amber-300 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-800 font-bold mb-1 text-xs">Direct Actual Unit Cost (AED / unit) *</label>
+            <div class="relative">
+              <input type="number" step="any" min="0" id="inp-daily-manual-unit-cost" oninput="handleDailyManualUnitCostInput(this.value)" placeholder="e.g. 11.50" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg font-mono-numbers font-bold text-amber-950 text-sm">
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1 block">Enter site unit cost directly. Total spend will calculate as Output Qty × Unit Cost.</span>
+          </div>
+          <div>
+            <label class="block text-slate-800 font-bold mb-1 text-xs">Or Total Actual Spend Today (AED) *</label>
+            <div class="relative">
+              <input type="number" step="any" min="0" id="inp-daily-manual-total-cost" oninput="handleDailyManualTotalCostInput(this.value)" placeholder="e.g. 2070.00" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg font-mono-numbers font-bold text-amber-950 text-sm">
+            </div>
+            <span class="text-[10px] text-slate-500 mt-1 block">Or enter total spent directly. Actual unit cost will calculate as Total ÷ Output Qty.</span>
+          </div>
+        </div>
+
+        <!-- Actual Manpower and Machinery on Site -->
+        <div id="row-daily-gang-inputs" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          
+          <!-- Actual Labour Hours -->
+          <div class="bg-white p-3.5 rounded-xl border border-emerald-200 flex flex-col gap-2">
+            <div class="flex items-center justify-between pb-2 border-b border-emerald-100">
+              <span class="font-bold text-emerald-800 flex items-center gap-1.5">
+                <i data-lucide="users" class="w-4 h-4 text-emerald-600"></i>
+                <span>Actual Labour Hours Worked</span>
+              </span>
+              <span id="badge-daily-actual-labour" class="font-mono-numbers font-bold text-emerald-700 text-xs">AED 0.00</span>
+            </div>
+            <div id="daily-labour-container" class="space-y-1.5 max-h-52 overflow-y-auto pr-1"></div>
+          </div>
+
+          <!-- Actual Machinery Hours -->
+          <div class="bg-white p-3.5 rounded-xl border border-blue-200 flex flex-col gap-2">
+            <div class="flex items-center justify-between pb-2 border-b border-blue-100">
+              <span class="font-bold text-blue-800 flex items-center gap-1.5">
+                <i data-lucide="truck" class="w-4 h-4 text-blue-600"></i>
+                <span>Actual Machinery Hours Used</span>
+              </span>
+              <span id="badge-daily-actual-plant" class="font-mono-numbers font-bold text-blue-700 text-xs">AED 0.00</span>
+            </div>
+            <div id="daily-plant-container" class="space-y-1.5 max-h-52 overflow-y-auto pr-1"></div>
+          </div>
+
+        </div>
+
+        <!-- Site Notes / Bottleneck Details -->
+        <div>
+          <label class="block text-slate-600 font-semibold mb-1">Site Observations / Delay Reasons / Notes</label>
+          <input type="text" id="inp-daily-notes" placeholder="e.g. Dune sand truck delivery delayed 1.5 hrs due to gate pass; soil moisture slightly dry" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+        </div>
+
+        <!-- Real-Time Profit / Loss Indicator Preview -->
+        <div class="p-4 rounded-xl border font-mono-numbers flex flex-wrap items-center justify-between gap-4 transition-colors" id="daily-preview-box">
+          <div>
+            <span class="block text-[11px] text-slate-500 uppercase font-bold tracking-wider">Today's Daily Profit / Loss</span>
+            <div class="flex items-baseline gap-2 mt-0.5">
+              <span id="daily-prev-pnl-val" class="text-2xl font-extrabold text-emerald-600">AED 0.00</span>
+              <span id="daily-prev-pnl-percent" class="text-sm font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">+0.0%</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-6 text-xs text-right">
+            <div>
+              <span class="block text-slate-400 text-[10px]">Actual Unit Cost</span>
+              <span id="daily-prev-actual-rate" class="font-bold text-slate-900">AED 0.00</span>
+            </div>
+            <div>
+              <span class="block text-slate-400 text-[10px]">Earned Budget Value</span>
+              <span id="daily-prev-earned" class="font-bold text-sky-700">AED 0.00</span>
+            </div>
+            <div>
+              <span class="block text-slate-400 text-[10px]">Actual Spent Today</span>
+              <span id="daily-prev-cost" class="font-bold text-amber-700">AED 0.00</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-100 border-t border-slate-200 flex items-center justify-between">
+        <button id="modal-daily-cancel" onclick="closeDailyModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg cursor-pointer">Cancel</button>
+        <button id="modal-daily-save" onclick="saveDailyLogFromModal()" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-lg shadow-md shadow-amber-600/30 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Save Daily Log</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 4: SMART SOLUTION DETAIL & REMEDIAL ACTIONS        -->
+  <!-- ======================================================== -->
+  <div id="modal-solution" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30">
+            <i data-lucide="lightbulb" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Productivity Diagnostic &amp; Solution</h3>
+            <p class="text-xs text-slate-400">Engineering recommendations to reverse loss &amp; restore profit</p>
+          </div>
+        </div>
+        <button id="modal-solution-close" onclick="closeSolutionModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 flex flex-col gap-4 text-xs font-sans" id="modal-solution-body">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-100 border-t border-slate-200 flex justify-end">
+        <button id="modal-solution-dismiss" onclick="closeSolutionModal()" class="px-5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 rounded-lg cursor-pointer">
+          Close Diagnostic
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 5: PROJECT SETTINGS (SEPARATE FIXED VS DAILY)      -->
+  <!-- ======================================================== -->
+  <div id="modal-settings" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Settings Header -->
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
+            <i data-lucide="sliders" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Project Configuration &amp; Settings</h3>
+            <p class="text-xs text-slate-400">Manage Fixed Baseline Rates and Daily Productivity Tracking settings separately</p>
+          </div>
+        </div>
+        <button id="modal-settings-close" onclick="closeSettingsModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Settings Sub-Tabs -->
+      <div class="bg-slate-100 border-b border-slate-200 px-6 py-2 flex items-center gap-1.5 text-xs font-semibold flex-wrap">
+        <button id="settings-tab-main-act" onclick="switchSettingsTab('main-act')" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs border border-slate-200 font-bold flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-red-600"></i>
+          <span>1. Main Activities Master</span>
+        </button>
+        <button id="settings-tab-resources" onclick="switchSettingsTab('resources')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="package-plus" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>2. Resources &amp; Divisions</span>
+        </button>
+        <button id="settings-tab-project" onclick="switchSettingsTab('project')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="folder-edit" class="w-3.5 h-3.5 text-sky-600"></i>
+          <span>3. Project &amp; Thresholds</span>
+        </button>
+        <button id="settings-tab-dashboard" onclick="switchSettingsTab('dashboard')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="layout-template" class="w-3.5 h-3.5 text-amber-600"></i>
+          <span>4. Dashboard Customizer</span>
+        </button>
+        <button id="settings-tab-login" onclick="switchSettingsTab('login')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+          <span>5. Users &amp; Passwords</span>
+        </button>
+        <button id="settings-tab-audit" onclick="switchSettingsTab('audit')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="history" class="w-3.5 h-3.5 text-teal-600"></i>
+          <span>6. Audit Trail</span>
+        </button>
+        <button id="settings-tab-code" onclick="switchSettingsTab('code')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="terminal" class="w-3.5 h-3.5 text-purple-600"></i>
+          <span>7. Python &amp; Admin Studio</span>
+        </button>
+      </div>
+
+      <!-- Settings Body -->
+      <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-5 text-xs">
+        
+        <!-- SUB-PANEL 1: MAIN ACTIVITIES MASTER (CANDY HIERARCHY) -->
+        <div id="settings-panel-main-act" class="flex flex-col gap-4 font-sans">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div>
+              <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+                <span>Main Activities Master Template List</span>
+              </h4>
+              <p class="text-slate-500 text-xs mt-0.5">Candy parent activities (shown in bold RED text in tables). All child sub-activities (BOQ items) and actual daily logs flow directly under their parent Main Activity.</p>
+            </div>
+            <div id="settings-main-act-locked-notice" class="hidden px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold flex items-center gap-1">
+              <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>Admin Only</span>
+            </div>
+          </div>
+
+          <!-- Add / Edit Main Activity Form -->
+          <div class="bg-red-50/50 p-4 rounded-xl border border-red-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <span id="title-main-act-form" class="font-bold text-red-900 text-xs flex items-center gap-1.5">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-red-600"></i>
+                <span>Add / Edit Main Activity Description</span>
+              </span>
+              <button type="button" id="btn-cancel-edit-main-act" onclick="resetMainActivityForm()" class="hidden text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer">
+                Cancel Edit
+              </button>
+            </div>
+            <input type="hidden" id="inp-set-main-id" value="">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+              <div class="sm:col-span-3">
+                <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Main Activity Code *</label>
+                <input type="text" id="inp-set-main-code" placeholder="e.g. S00100" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-mono font-bold text-red-700 text-xs">
+              </div>
+              <div class="sm:col-span-6">
+                <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Main Activity Description *</label>
+                <input type="text" id="inp-set-main-desc" placeholder="e.g. Red Dune sand filling in ground covers/succulents/grasses." class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-medium text-slate-900 text-xs">
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Default Batch Qty</label>
+                <input type="number" step="any" id="inp-set-main-qty" placeholder="e.g. 200" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-mono-numbers text-xs">
+              </div>
+              <div class="sm:col-span-12 flex justify-end gap-2 pt-1">
+                <button type="button" onclick="saveMainActivityFromSettings()" class="px-4 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-500 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                  <span id="btn-label-save-main-act">+ Save Main Activity</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Existing Main Activities List -->
+          <div>
+            <span class="block font-bold text-slate-800 text-xs mb-2">Configured Main Activities (<span id="count-main-acts">0</span>)</span>
+            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th class="py-2 px-3 w-28">Main Code</th>
+                    <th class="py-2 px-3">Main Activity Description</th>
+                    <th class="py-2 px-3 text-right w-32">Default Batch Qty</th>
+                    <th class="py-2 px-3 text-center w-28">Sub-Activities</th>
+                    <th class="py-2 px-3 text-center w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="settings-main-activities-tbody" class="divide-y divide-slate-100">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL 2: MASTER RESOURCES (UNITS, LABOUR, MACHINERY) -->
+        <div id="settings-panel-resources" class="hidden flex flex-col gap-6 font-sans">
+          
+          <!-- SECTION A: UNITS OF MEASUREMENT -->
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                  <i data-lucide="scale" class="w-4 h-4 text-sky-600"></i>
+                  <span>Units of Measurement Master</span>
+                </h5>
+                <p class="text-slate-500 text-[11px]">Add extra units for BOQ activities and site measurements (e.g. m3, LM, No, m2, Ton, Trip, Hr, Day, LS, Bag, etc.)</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+              <div class="flex items-center gap-1.5">
+                <input type="text" id="inp-new-unit-name" placeholder="e.g. Ton" class="w-32 px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-bold uppercase">
+                <button type="button" onclick="addUnitFromSettings()" class="px-3 py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm flex items-center gap-1 cursor-pointer">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>+ Add Unit</span>
+                </button>
+              </div>
+              <span class="text-slate-400 text-[11px] ml-1">Available Units:</span>
+              <div id="settings-units-container" class="flex items-center gap-1.5 flex-wrap">
+                <!-- Dynamically rendered unit badges -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION B: LABOUR TRADES -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="font-bold text-emerald-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="users" class="w-4 h-4 text-emerald-600"></i>
+                  <span>Labour Trades Master (Hourly Rates in AED)</span>
+                </h5>
+                <p class="text-slate-500 text-[11px]">Standard trades used to calculate labour budget and daily actual manpower cost.</p>
+              </div>
+            </div>
+
+            <!-- Add Labour Trade Form -->
+            <div class="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 grid grid-cols-1 sm:grid-cols-4 gap-2.5 items-end">
+              <div>
+                <label class="block text-emerald-900 text-[11px] font-semibold mb-1">Trade Name *</label>
+                <input type="text" id="inp-new-labour-name" placeholder="e.g. Rigger or Surveyor" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+              </div>
+              <div>
+                <label class="block text-emerald-900 text-[11px] font-semibold mb-1">Short Code *</label>
+                <input type="text" id="inp-new-labour-short" placeholder="e.g. Rig" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-bold">
+              </div>
+              <div>
+                <label class="block text-emerald-900 text-[11px] font-semibold mb-1">Rate (AED / hr) *</label>
+                <input type="number" step="0.01" id="inp-new-labour-rate" placeholder="15.00" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono-numbers font-bold">
+              </div>
+              <div>
+                <button type="button" onclick="addLabourTradeFromSettings()" class="w-full py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-sm flex items-center justify-center gap-1 cursor-pointer">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add Trade</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Labour Rates Grid -->
+            <div id="settings-labour-rates" class="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono-numbers"></div>
+          </div>
+
+          <!-- SECTION C: PLANT & EQUIPMENT MACHINERY -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="font-bold text-blue-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="truck" class="w-4 h-4 text-blue-600"></i>
+                  <span>Plant Machinery &amp; Equipment Master (AED / hr or trip)</span>
+                </h5>
+                <p class="text-slate-500 text-[11px]">Construction machinery and vehicles used in gang workouts and daily actual logs.</p>
+              </div>
+            </div>
+
+            <!-- Add Plant Form -->
+            <div class="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 grid grid-cols-1 sm:grid-cols-5 gap-2.5 items-end">
+              <div class="sm:col-span-2">
+                <label class="block text-blue-900 text-[11px] font-semibold mb-1">Equipment Name *</label>
+                <input type="text" id="inp-new-plant-name" placeholder="e.g. Telehandler 14m" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+              </div>
+              <div>
+                <label class="block text-blue-900 text-[11px] font-semibold mb-1">Short Code *</label>
+                <input type="text" id="inp-new-plant-short" placeholder="e.g. Tele 14m" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-bold">
+              </div>
+              <div>
+                <label class="block text-blue-900 text-[11px] font-semibold mb-1">Unit</label>
+                <select id="inp-new-plant-unit" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+                  <option value="Hrs">Hrs</option>
+                  <option value="Trip">Trip</option>
+                  <option value="Day">Day</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-blue-900 text-[11px] font-semibold mb-1">Rate (AED) *</label>
+                <input type="number" step="0.5" id="inp-new-plant-rate" placeholder="85.00" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono-numbers font-bold">
+              </div>
+              <div class="sm:col-span-5 flex justify-end">
+                <button type="button" onclick="addPlantEquipmentFromSettings()" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm flex items-center gap-1 cursor-pointer">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add Plant / Equipment</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Plant Rates Grid -->
+            <div id="settings-plant-rates" class="grid grid-cols-1 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1 font-mono-numbers"></div>
+
+            <div class="flex items-center justify-between pt-2">
+              <span class="text-[11px] text-slate-500">Hourly rates apply to all activity calculations in the active project.</span>
+              <button type="button" onclick="saveResourceRatesFromSettings()" class="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Save Resource Rates</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SECTION D: DIVISIONS MASTER -->
+          <div class="space-y-3 pt-3 border-t border-slate-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="font-bold text-sky-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="tag" class="w-4 h-4 text-sky-600"></i>
+                  <span>Project Divisions Master (SL, HL, IR, CW, EW, MEP, ST, etc.)</span>
+                </h5>
+                <p class="text-slate-500 text-[11px]">Manage, add, and edit custom site engineering divisions. Changes immediately flow to Fixed Baseline and Daily Logs.</p>
+              </div>
+            </div>
+
+            <!-- Add / Edit Division Form -->
+            <div class="p-3.5 rounded-xl border border-sky-200 bg-sky-50/50 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span id="title-div-form" class="font-bold text-sky-950 text-xs flex items-center gap-1.5">
+                  <i data-lucide="tag" class="w-4 h-4 text-sky-600"></i>
+                  <span>Add / Edit Project Division</span>
+                </span>
+                <button type="button" id="btn-cancel-edit-div" onclick="resetDivisionForm()" class="hidden text-[11px] text-slate-500 hover:text-slate-800 underline cursor-pointer">
+                  Cancel Edit
+                </button>
+              </div>
+              <input type="hidden" id="inp-edit-div-original-code" value="">
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 items-end">
+                <div>
+                  <label class="block text-sky-900 text-[11px] font-semibold mb-1">Division Code *</label>
+                  <input type="text" id="inp-new-div-code" placeholder="e.g. EW, MEP, ST" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono font-bold uppercase">
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-sky-900 text-[11px] font-semibold mb-1">Division Name / Description *</label>
+                  <input type="text" id="inp-new-div-name" placeholder="e.g. Earth Works & Grading or MEP Works" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+                </div>
+                <div>
+                  <button type="button" id="btn-save-div" onclick="saveDivisionFromSettings()" class="w-full py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm flex items-center justify-center gap-1 cursor-pointer">
+                    <i data-lucide="plus" class="w-3.5 h-3.5" id="icon-save-div"></i>
+                    <span id="btn-label-save-div">+ Add Division</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Divisions Table / List -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th class="py-2 px-3 w-24">Code</th>
+                    <th class="py-2 px-3">Division Name</th>
+                    <th class="py-2 px-3 text-center w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="settings-divisions-tbody" class="divide-y divide-slate-100 font-medium">
+                  <!-- Populated by renderSettingsDivisions() in app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL 3: PROJECT INFO & THRESHOLDS -->
+        <div id="settings-panel-project" class="hidden flex flex-col gap-4 font-sans">
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm mb-1">Active Project Profile &amp; Control Thresholds</h4>
+            <p class="text-slate-500 text-xs mb-3">Edit project name, code, client, dates and sensitivity rules for productivity loss detection.</p>
+          </div>
+
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div class="sm:col-span-2">
+              <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Project Name *</label>
+              <input type="text" id="set-proj-name" placeholder="Project Name" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-semibold">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Project Code *</label>
+              <input type="text" id="set-proj-code" placeholder="Project Code" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded font-mono font-bold text-sky-700 text-xs">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Client / Main Contractor</label>
+              <input type="text" id="set-proj-client" placeholder="Client Name" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Project Start Date</label>
+              <input type="date" id="set-proj-start" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono-numbers">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Target End Date</label>
+              <input type="date" id="set-proj-end" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono-numbers">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <label class="block text-slate-800 font-semibold mb-1 text-[11px]">Loss Alert Threshold (% Variance)</label>
+              <div class="flex items-center gap-2">
+                <input type="number" id="inp-loss-threshold" value="0.0" step="0.5" class="w-28 px-3 py-1.5 bg-white border border-slate-300 rounded font-bold font-mono-numbers text-slate-900">
+                <span class="text-slate-600">% Below Budget</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1.5">Flag diagnostic alerts when actual cost exceeds earned budget by this margin.</p>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <label class="block text-slate-800 font-semibold mb-1 text-[11px]">Standard Working Hours Per Shift</label>
+              <div class="flex items-center gap-2">
+                <input type="number" id="inp-shift-hours" value="10" step="0.5" class="w-28 px-3 py-1.5 bg-white border border-slate-300 rounded font-bold font-mono-numbers text-slate-900">
+                <span class="text-slate-600">Hours / Day</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1.5">Shift basis for headcount derivation &amp; equipment utilization.</p>
+            </div>
+          </div>
+
+          <!-- MANUAL UNIT RATE & DIRECT SPEND MODES ACCESS CONTROL (ADMIN ONLY) -->
+          <div class="bg-amber-50/70 p-4 rounded-xl border border-amber-300 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-amber-200">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  <i data-lucide="sliders" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h5 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Manual Rate &amp; Direct Spend Modes (Admin Only)</h5>
+                  <span class="text-[11px] text-slate-600">Enable direct unit rate entry without requiring labour and machinery gang breakdowns</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-bold text-[10px]">Contract Flexibility</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Toggle 1: Fixed Baseline Manual Unit Rate -->
+              <div class="bg-white p-3.5 rounded-xl border border-amber-200 flex items-start justify-between gap-3 shadow-2xs">
+                <div>
+                  <span class="font-bold text-slate-800 text-xs block">Fixed Baseline: Manual Unit Rate Entry</span>
+                  <p class="text-[11px] text-slate-500 mt-1">
+                    Allows entering Tender / Allowable Rate directly (e.g. 11.08 AED) without requiring labour &amp; plant norm breakdown.
+                  </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                  <input type="checkbox" id="set-allow-manual-fixed-rate" checked onchange="toggleManualFixedRateSetting(this.checked)" class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                </label>
+              </div>
+
+              <!-- Toggle 2: Daily Log Manual Actual Rate / Cost -->
+              <div class="bg-white p-3.5 rounded-xl border border-amber-200 flex items-start justify-between gap-3 shadow-2xs">
+                <div>
+                  <span class="font-bold text-slate-800 text-xs block">Daily Logs: Direct Actual Rate / Spend Entry</span>
+                  <p class="text-[11px] text-slate-500 mt-1">
+                    Allows logging daily site execution costs directly via Actual Unit Cost or Total Spend without entering worker hours.
+                  </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                  <input type="checkbox" id="set-allow-manual-daily-rate" checked onchange="toggleManualDailyRateSetting(this.checked)" class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-1">
+            <button type="button" onclick="saveProjectSettingsFromTab()" class="px-4 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>Save Project Profile &amp; Settings</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL 4: DASHBOARD & HEADINGS CUSTOMIZER -->
+        <div id="settings-panel-dashboard" class="hidden flex flex-col gap-4 font-sans">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span>Dashboard Titles &amp; Headings Customizer</span>
+              </h4>
+              <p class="text-slate-500 text-xs mt-0.5">Customize application title, KPI card labels, and navigation tab names to match your company standard.</p>
+            </div>
+            <div id="settings-dashboard-locked-notice" class="hidden px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold flex items-center gap-1">
+              <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>Admin Only</span>
+            </div>
+          </div>
+
+          <!-- DASHBOARD VIEW TAB ACCESS CONTROL (ADMIN ONLY) -->
+          <div class="bg-indigo-50/70 p-4 rounded-xl border border-indigo-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <span class="font-bold text-slate-800 text-xs uppercase tracking-wider block">Dashboard View Tab Access Control (Admin Only)</span>
+                  <span class="text-[11px] text-slate-500">Control whether regular Site Users can see the Executive Dashboard tab</span>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="set-dashboard-tab-enabled" checked onchange="toggleDashboardTabVisibilitySetting(this.checked)" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+            <p class="text-xs text-slate-600">
+              <strong>Enable Dashboard View Tab for Site Users:</strong> When enabled, regular Site Users can see and browse the Executive Dashboard. When disabled, the Dashboard tab is completely hidden from non-admins (others cannot see unless it is enabled).
+            </p>
+            <div id="badge-dash-tab-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              <span id="badge-dash-tab-status-text">Dashboard Tab is Currently Visible to All Users</span>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <!-- App Branding & Top Bar -->
+            <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-200 space-y-3">
+              <h5 class="font-bold text-amber-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="type" class="w-4 h-4 text-amber-600"></i>
+                <span>Application Header &amp; Branding</span>
+              </h5>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1 text-[11px]">System Main Title</label>
+                  <input type="text" id="inp-cust-header-title" placeholder="CandyEstimator SitePro" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-bold">
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1 text-[11px]">System Sub-Tagline / Badge</label>
+                  <input type="text" id="inp-cust-header-subtitle" placeholder="P&L Engine / Professional Construction" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+                </div>
+              </div>
+            </div>
+
+            <!-- KPI Cards Customizer -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <h5 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="layout-grid" class="w-4 h-4 text-sky-600"></i>
+                <span>KPI Cards Headings &amp; Subtitles</span>
+              </h5>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
+                  <span class="text-[11px] font-bold text-emerald-800 block">KPI Card 1: Profit / Loss Card</span>
+                  <input type="text" id="inp-cust-card1-title" placeholder="Net Profit / Loss Status" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded font-semibold">
+                  <input type="text" id="inp-cust-card1-sub" placeholder="Earned budget vs actual site expenditure" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded text-slate-600">
+                </div>
+                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
+                  <span class="text-[11px] font-bold text-sky-800 block">KPI Card 2: Productivity Index (SPI)</span>
+                  <input type="text" id="inp-cust-card2-title" placeholder="Site Productivity Index (PI)" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded font-semibold">
+                  <input type="text" id="inp-cust-card2-sub" placeholder="Output efficiency ratio (>1.0 = Efficient)" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded text-slate-600">
+                </div>
+                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
+                  <span class="text-[11px] font-bold text-indigo-800 block">KPI Card 3: Physical Progress</span>
+                  <input type="text" id="inp-cust-card3-title" placeholder="Physical Progress Completed" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded font-semibold">
+                  <input type="text" id="inp-cust-card3-sub" placeholder="Total executed vs contract BOQ volume" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded text-slate-600">
+                </div>
+                <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
+                  <span class="text-[11px] font-bold text-amber-800 block">KPI Card 4: Daily Volume Spend</span>
+                  <input type="text" id="inp-cust-card4-title" placeholder="Today's Daily Output Spend" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded font-semibold">
+                  <input type="text" id="inp-cust-card4-sub" placeholder="Actual labour & machinery spent today" class="w-full px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded text-slate-600">
+                </div>
+              </div>
+            </div>
+
+            <!-- Navigation Tab Titles -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <h5 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="navigation" class="w-4 h-4 text-indigo-600"></i>
+                <span>Navigation Tabs Headings</span>
+              </h5>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Tab 1 Label (Dashboard)</label>
+                  <input type="text" id="inp-cust-nav-dashboard" placeholder="Dashboard & Results" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Tab 2 Label (Fixed Baseline)</label>
+                  <input type="text" id="inp-cust-nav-fixed" placeholder="Fixed Candy Budgets (With Daily Logs Underneath)" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Tab 3 Label (Daily Logs)</label>
+                  <input type="text" id="inp-cust-nav-daily" placeholder="All Daily Site Logs (Actuals)" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+                </div>
+                <div>
+                  <label class="block text-slate-700 font-semibold mb-1 text-[11px]">Tab 4 Label (Excel Template)</label>
+                  <input type="text" id="inp-cust-nav-matrix" placeholder="Excel Template View" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-2">
+              <button type="button" onclick="resetDashboardCustomizationToDefault()" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 bg-white border border-slate-300 rounded-lg cursor-pointer">
+                Reset to Default Headings
+              </button>
+              <button type="button" onclick="saveDashboardCustomizationFromTab()" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span>Save &amp; Apply Live Headings</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL 5: USER LOGIN & ACCESS CONTROL -->
+        <div id="settings-panel-login" class="hidden flex flex-col gap-5 font-sans">
+          
+          <!-- Current Active Session Card -->
+          <div class="p-4 rounded-xl bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div id="settings-active-user-avatar" class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-sm border border-sky-500/30">
+                AD
+              </div>
+              <div>
+                <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">Active Session</span>
+                <span id="settings-active-user-name" class="font-bold text-sm text-white block">Administrator</span>
+                <span class="text-slate-400 text-xs">User ID: <code id="settings-active-user-id" class="text-sky-300 font-mono">admin</code></span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="settings-active-user-role-badge" class="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase">
+                👑 Administrator (Full Control)
+              </span>
+              <button type="button" onclick="openLoginModal()" class="px-3 py-1.5 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors cursor-pointer">
+                Switch User
+              </button>
+            </div>
+          </div>
+
+          <!-- Permissions Guide Comparison -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-xl border border-sky-200 bg-sky-50/70">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-base">👑</span>
+                <h5 class="font-bold text-sky-950 text-xs">Administrator Permissions</h5>
+              </div>
+              <ul class="text-[11px] text-sky-900 space-y-1 list-disc list-inside">
+                <li>Create, edit, and delete fixed baseline Candy activities</li>
+                <li>Adjust labour &amp; plant hourly rates, master resources, and units</li>
+                <li>Add, edit, and delete daily site productivity logs for ANY date</li>
+                <li>Edit active project name, code, client, and target dates</li>
+                <li>Add new projects and permanently delete unwanted projects</li>
+                <li>Manage user accounts, roles, and passwords</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 rounded-xl border border-amber-200 bg-amber-50/70">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-base">👷</span>
+                <h5 class="font-bold text-amber-950 text-xs">Site User / Field Engineer Permissions</h5>
+              </div>
+              <ul class="text-[11px] text-amber-900 space-y-1 list-disc list-inside">
+                <li><strong>All-Day Access</strong>: Can log in on any day without expiration</li>
+                <li><strong>Site Daily Reporting</strong>: Record and edit daily actual quantities &amp; hours</li>
+                <li><span class="text-rose-700 font-bold">Cannot</span> change fixed Candy baseline norms, codes, or budgets</li>
+                <li><span class="text-rose-700 font-bold">Cannot</span> delete projects or factory-reset system baselines</li>
+                <li>Full view of spreadsheets, KPI dashboards, smart solutions &amp; exports</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Add User Credentials Form (Administrator Only) -->
+          <div id="settings-add-user-section" class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                  <i data-lucide="user-plus" class="w-4 h-4 text-sky-600"></i>
+                  <span>Add New User or Administrator Credential</span>
+                </h5>
+                <p class="text-slate-500 text-[11px]">Create credentials for site engineers or administrative managers.</p>
+              </div>
+            </div>
+
+            <form onsubmit="handleAddNewUserFormSubmit(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 items-end">
+              <div>
+                <label class="block text-slate-700 text-[11px] font-semibold mb-1">User ID / Login *</label>
+                <input type="text" id="inp-new-user-id" placeholder="e.g. engineer1" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-slate-700 text-[11px] font-semibold mb-1">Full Name / Title *</label>
+                <input type="text" id="inp-new-user-name" placeholder="e.g. John Doe - Field Eng" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+              </div>
+              <div>
+                <label class="block text-slate-700 text-[11px] font-semibold mb-1">Password *</label>
+                <input type="text" id="inp-new-user-pass" placeholder="Password" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs">
+              </div>
+              <div>
+                <label class="block text-slate-700 text-[11px] font-semibold mb-1">Assigned Role *</label>
+                <select id="inp-new-user-role" class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded text-slate-900 text-xs font-semibold">
+                  <option value="user">Site User (Daily Actuals Only)</option>
+                  <option value="admin">Administrator (Full Access)</option>
+                </select>
+              </div>
+              <div class="sm:col-span-4 flex justify-end">
+                <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add User Credential</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Existing Users Table -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h5 class="font-bold text-slate-800 text-xs">Registered User Accounts</h5>
+              <button type="button" onclick="closeSettingsModal(); openManageCredentialsModal();" class="px-3 py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-300 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer">
+                <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                <span>Manage All Passwords &amp; Roles</span>
+              </button>
+            </div>
+            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th class="py-2.5 px-3">User ID</th>
+                    <th class="py-2.5 px-3">Full Name</th>
+                    <th class="py-2.5 px-3">Role</th>
+                    <th class="py-2.5 px-3">Permissions Scope</th>
+                    <th class="py-2.5 px-3 text-center w-28">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="settings-users-tbody" class="divide-y divide-slate-100">
+                  <!-- Populated dynamically by app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SUB-PANEL 6: AUDIT TRAIL (WHO DID WHAT) -->
+        <div id="settings-panel-audit" class="hidden flex flex-col gap-4 font-sans">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                <span>Audit Trail &amp; Activity Log ("Who Did What")</span>
+              </h4>
+              <p class="text-slate-500 text-xs mt-0.5">Immutable record of all project creations, baseline changes, daily site logs, rate adjustments, and data exports.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="exportAuditTrailCSV()" class="px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1 cursor-pointer">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>Export Audit CSV</span>
+              </button>
+              <button type="button" onclick="exportAuditTrailJSON()" class="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg flex items-center gap-1 cursor-pointer">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-slate-600"></i>
+                <span>JSON</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Ribbon -->
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+              <input type="text" id="inp-search-audit" placeholder="Search by user, action, target, or details..." oninput="filterAuditTrailTable(this.value)" class="w-full px-2.5 py-1 text-xs bg-white border border-slate-300 rounded focus:ring-1 focus:ring-emerald-500">
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="sel-filter-audit-action" onchange="filterAuditTrailTable()" class="px-2.5 py-1 text-xs bg-white border border-slate-300 rounded text-slate-700 font-semibold">
+                <option value="ALL">All Event Types</option>
+                <option value="PROJECT">Projects</option>
+                <option value="FIXED">Fixed Baselines</option>
+                <option value="DAILY">Daily Logs</option>
+                <option value="SETTINGS">Settings &amp; Rates</option>
+                <option value="USER">User Access</option>
+                <option value="EXPORT">Data Exports</option>
+              </select>
+              <button type="button" onclick="clearAuditTrailHistory()" class="text-xs text-rose-600 hover:text-rose-800 underline font-semibold cursor-pointer">Clear History</button>
+            </div>
+          </div>
+
+          <!-- Audit Table -->
+          <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+            <div class="max-h-96 overflow-y-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10">
+                  <tr>
+                    <th class="py-2.5 px-3 w-40">Date &amp; Time</th>
+                    <th class="py-2.5 px-3 w-36">User</th>
+                    <th class="py-2.5 px-3 w-36">Action</th>
+                    <th class="py-2.5 px-3 w-48">Target / Entity</th>
+                    <th class="py-2.5 px-3">Details / Changes</th>
+                  </tr>
+                </thead>
+                <tbody id="settings-audit-tbody" class="divide-y divide-slate-100">
+                  <!-- Populated by renderAuditTrailTable() in app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANEL 7: PYTHON & ADMIN CODE STUDIO -->
+        <div id="settings-panel-code" class="hidden flex flex-col gap-4 font-sans">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div>
+              <h4 class="font-bold text-purple-900 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+                <span>Python &amp; Admin Configuration Studio (Admin Access Only)</span>
+              </h4>
+              <p class="text-slate-500 text-xs mt-0.5">Directly edit activity descriptions in real-time, or use the standalone Python CLI script for batch modifications and automated maintenance.</p>
+            </div>
+            <span class="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-lg text-xs font-bold border border-purple-200">
+              👑 Admin Only
+            </span>
+          </div>
+
+          <!-- Module 1: Live Interactive Description Quick-Editor -->
+          <div class="bg-purple-50/60 p-4 rounded-xl border border-purple-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <h5 class="font-bold text-purple-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="edit" class="w-4 h-4 text-purple-600"></i>
+                <span>Live Sub-Activity Description Quick-Editor</span>
+              </h5>
+              <span class="text-[11px] text-purple-700 font-semibold">Instant browser-to-data sync</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+              <div>
+                <label class="block text-purple-950 font-semibold mb-1 text-[11px]">Select Sub-Activity to Edit</label>
+                <select id="sel-code-sub-act" onchange="onCodeSelectSubActChange(this.value)" class="w-full px-2.5 py-1.5 bg-white border border-purple-300 rounded text-xs text-slate-800">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div>
+                <label class="block text-purple-950 font-semibold mb-1 text-[11px]">Candy Code / ID</label>
+                <input type="text" id="inp-code-sub-act-code" readonly class="w-full px-2.5 py-1.5 bg-purple-100/70 border border-purple-200 rounded font-mono font-bold text-purple-900 text-xs">
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-purple-950 font-semibold mb-1 text-[11px]">New Sub-Activity Description</label>
+                <textarea id="inp-code-sub-act-desc" rows="2" class="w-full px-3 py-1.5 bg-white border border-purple-300 rounded text-slate-900 text-xs"></textarea>
+              </div>
+              <div class="sm:col-span-2 flex justify-end">
+                <button type="button" onclick="saveSubActivityDescriptionFromStudio()" class="px-4 py-1.5 text-xs font-bold text-white bg-purple-700 hover:bg-purple-600 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                  <span>Save Sub-Activity Description Directly</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 2: Live Main Activity Description Quick-Editor -->
+          <div class="bg-red-50/60 p-4 rounded-xl border border-red-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <h5 class="font-bold text-red-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4 text-red-600"></i>
+                <span>Live Main Activity Description Quick-Editor</span>
+              </h5>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+              <div>
+                <label class="block text-red-950 font-semibold mb-1 text-[11px]">Select Main Activity Code</label>
+                <select id="sel-code-main-act" onchange="onCodeSelectMainActChange(this.value)" class="w-full px-2.5 py-1.5 bg-white border border-red-300 rounded text-xs text-slate-800">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div>
+                <label class="block text-red-950 font-semibold mb-1 text-[11px]">New Main Description</label>
+                <input type="text" id="inp-code-main-act-desc" class="w-full px-3 py-1.5 bg-white border border-red-300 rounded text-slate-900 text-xs">
+              </div>
+              <div class="sm:col-span-2 flex justify-end">
+                <button type="button" onclick="saveMainActivityDescriptionFromStudio()" class="px-4 py-1.5 text-xs font-bold text-white bg-red-700 hover:bg-red-600 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                  <span>Save Main Activity Description Directly</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module 3: Standalone Python Script CLI Guide -->
+          <div class="bg-slate-900 text-slate-200 p-4 rounded-xl space-y-3 font-mono text-xs">
+            <div class="flex items-center justify-between text-slate-300 pb-2 border-b border-slate-800">
+              <span class="flex items-center gap-2 font-bold text-purple-300">
+                <i data-lucide="terminal" class="w-4 h-4"></i>
+                <span>Python CLI Script: admin_config.py</span>
+              </span>
+              <span class="text-[11px] text-slate-400">c:\Users\Kavin Raj\Desktop\web\admin_config.py</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-sans">You can run this standalone script anytime from PowerShell / Command Prompt to inspect, update, or automate descriptions and baselines without needing to ask the AI assistant each time:</p>
+            <div class="bg-black/60 p-3 rounded-lg space-y-1.5 text-emerald-400 text-[11px]">
+              <div><span class="text-slate-500"># 1. View all projects, main activities, and sub-activities:</span></div>
+              <div class="text-sky-300">python admin_config.py --list</div>
+              <div class="pt-1"><span class="text-slate-500"># 2. Edit any sub-activity description directly:</span></div>
+              <div class="text-sky-300">python admin_config.py --edit-desc "22110001" "Red dune sand (Sweet Soil Filling) filling Ground Covers..."</div>
+              <div class="pt-1"><span class="text-slate-500"># 3. Edit any Main Activity description directly:</span></div>
+              <div class="text-sky-300">python admin_config.py --edit-main "S00147 (A,B,C)" "Sweeting Sand filling in ground covers/ succulents/grasses"</div>
+              <div class="pt-1"><span class="text-slate-500"># 4. View complete audit history of all changes:</span></div>
+              <div class="text-sky-300">python admin_config.py --audit</div>
+            </div>
+
+            <!-- Sync Buttons -->
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800 flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="exportStateForPython()" class="px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span>Sync &amp; Download candy_state_backup.json</span>
+                </button>
+                <label class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-slate-700">
+                  <i data-lucide="upload" class="w-3.5 h-3.5 text-sky-400"></i>
+                  <span>Import Python State</span>
+                  <input type="file" accept=".json" onchange="importPythonStateFile(event)" class="hidden">
+                </label>
+              </div>
+              <button type="button" onclick="togglePythonScriptViewer()" class="text-xs text-purple-400 hover:text-purple-300 underline cursor-pointer">
+                View Python Code
+              </button>
+            </div>
+
+            <div id="box-python-code-viewer" class="hidden mt-3 p-3 bg-black/80 rounded-lg text-slate-300 text-[10px] max-h-48 overflow-y-auto">
+              <pre id="pre-python-script-code">Loading admin_config.py source...</pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Settings Footer -->
+      <div class="px-6 py-3.5 bg-slate-100 border-t border-slate-200 flex items-center justify-between">
+        <button id="btn-reset-rates-defaults" onclick="resetSettingsToDefaults()" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 bg-white border border-slate-300 rounded-lg cursor-pointer">Reset Default Rates</button>
+        <button id="modal-settings-save" onclick="saveSettingsFromModal()" class="px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-md shadow-sky-600/30 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Save Settings</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 6: MANAGE & DELETE UNWANTED PROJECTS               -->
+  <!-- ======================================================== -->
+  <div id="modal-manage-projects" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+            <i data-lucide="folder-cog" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Project Manager</h3>
+            <p class="text-xs text-slate-400">Switch between projects or delete unwanted projects permanently</p>
+          </div>
+        </div>
+        <button onclick="closeManageProjectsModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-4 text-xs font-sans">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 text-xs">Total Projects in System: <strong id="manage-proj-count" class="text-slate-800">2</strong></span>
+          <button onclick="closeManageProjectsModal(); openProjectModal();" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm cursor-pointer">
+            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+            <span>+ Add New Project</span>
+          </button>
+        </div>
+
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="py-2.5 px-3">Project Code</th>
+                <th class="py-2.5 px-3">Project Name</th>
+                <th class="py-2.5 px-2 text-center">Activities</th>
+                <th class="py-2.5 px-2 text-center">Daily Logs</th>
+                <th class="py-2.5 px-3 text-center">Active Status</th>
+                <th class="py-2.5 px-3 text-center w-36">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="manage-projects-tbody" class="divide-y divide-slate-100">
+              <!-- Populated dynamically by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-100 border-t border-slate-200 flex justify-end">
+        <button onclick="closeManageProjectsModal()" class="px-5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 7: SYSTEM LOGIN & ROLE SWITCHER                    -->
+  <!-- ======================================================== -->
+  <div id="modal-login" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">System Authentication</h3>
+            <p class="text-xs text-slate-400">Sign in to control baseline edits &amp; daily logs</p>
+          </div>
+        </div>
+        <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 flex flex-col gap-4 text-xs font-sans">
+        
+        <!-- Current Active Session -->
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-bold block">Current Active Session</span>
+            <span id="login-modal-current-user" class="font-bold text-slate-800 text-sm">Administrator</span>
+          </div>
+          <span id="login-modal-current-role" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 uppercase">👑 Admin</span>
+        </div>
+
+        <!-- Credentials Form -->
+        <form onsubmit="handleLoginFormSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">User ID / Username</label>
+            <input type="text" id="inp-login-modal-user" placeholder="e.g. admin or user" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Password</label>
+            <input type="password" id="inp-login-modal-pass" placeholder="••••••••" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500">
+          </div>
+
+          <div class="pt-2 flex items-center justify-between gap-3">
+            <button type="button" onclick="closeLoginModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-md shadow-sky-600/30 flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="log-in" class="w-4 h-4"></i>
+              <span>Log In</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 8: USER CREDENTIALS & PASSWORD MANAGEMENT          -->
+  <!-- ======================================================== -->
+  <div id="modal-manage-credentials" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
+            <i data-lucide="key-round" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Login &amp; User Credentials Settings</h3>
+            <p class="text-xs text-slate-400">Configure Administrator and Site User credentials and their individual passwords</p>
+          </div>
+        </div>
+        <button onclick="closeManageCredentialsModal()" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-6 text-xs font-sans">
+        
+        <!-- Info Banner -->
+        <div class="bg-sky-50 border border-sky-200 p-3 rounded-xl text-slate-700 text-xs flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-sky-600 shrink-0"></i>
+          <span>Each person has their own user ID and password. <strong>Administrators</strong> have complete access. <strong>Site Users</strong> can only record daily logs for today's date and cannot modify fixed baselines.</span>
+        </div>
+
+        <!-- SECTION 1: ADMINISTRATORS -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div>
+              <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <span>👑</span>
+                <span>Administrator Accounts (Full Access)</span>
+              </h4>
+              <p class="text-slate-500 text-[11px]">Can add/edit/delete baselines, view and edit all dates, and configure projects.</p>
+            </div>
+            <button type="button" onclick="addAdminCredentialRow()" class="px-3 py-1.5 bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 rounded-lg font-bold text-xs flex items-center gap-1 cursor-pointer">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>+ Add Administrator</span>
+            </button>
+          </div>
+          <div id="cred-admins-container" class="space-y-2.5">
+            <!-- Rendered dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- SECTION 2: SITE USERS -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div>
+              <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <span>👷</span>
+                <span>Site User Accounts (Restricted: Today Only, No Baseline Edits)</span>
+              </h4>
+              <p class="text-slate-500 text-[11px]">Can only record actual site execution for the current date. Baselines are locked.</p>
+            </div>
+            <button type="button" onclick="addUserCredentialRow()" class="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 rounded-lg font-bold text-xs flex items-center gap-1 cursor-pointer">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>+ Add Site User</span>
+            </button>
+          </div>
+          <div id="cred-users-container" class="space-y-2.5">
+            <!-- Rendered dynamically by app.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-100 border-t border-slate-200 flex items-center justify-between">
+        <button onclick="closeManageCredentialsModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="saveCredentialsFromModal()" class="px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-md shadow-sky-600/30 flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Save All Credentials &amp; Passwords</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+  <!-- ======================================================== -->
+  <!-- MODAL 9: ACCESS DENIED DIALOG (SITE USER RESTRICTION)    -->
+  <!-- ======================================================== -->
+  <div id="modal-access-denied" style="display: none;" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-rose-200 w-full max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-slate-800">
+      
+      <!-- Red Alert Header -->
+      <div class="p-6 bg-gradient-to-b from-rose-50 to-white flex flex-col items-center text-center border-b border-rose-100">
+        <div class="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border-2 border-rose-500/30 mb-3 shadow-inner">
+          <i data-lucide="shield-alert" class="w-9 h-9 text-rose-600"></i>
+        </div>
+        <span class="px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200 mb-1.5">
+          ⛔ Access Denied
+        </span>
+        <h3 class="text-lg font-black text-slate-900">Administrator Privilege Required</h3>
+        <p id="access-denied-message" class="text-xs text-slate-600 mt-2 px-2 leading-relaxed">
+          You are currently signed in as a <strong>Site User</strong>. Only <strong>Administrators</strong> have permission to perform this action.
+        </p>
+      </div>
+
+      <!-- Action Context Box -->
+      <div class="px-6 py-4 bg-slate-50 space-y-2.5 text-xs border-b border-slate-200">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 font-medium">Attempted Action:</span>
+          <span id="access-denied-action-name" class="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">Admin Action</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 font-medium">Your Active Profile:</span>
+          <span id="access-denied-current-user" class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Site User</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 font-medium">Required Access Level:</span>
+          <span class="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">👑 Administrator</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="p-4 bg-white flex flex-col sm:flex-row items-center gap-2">
+        <button type="button" onclick="closeAccessDeniedModal(); openLoginModal();" class="w-full sm:flex-1 py-2.5 px-4 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white font-bold rounded-xl shadow-md shadow-sky-600/25 flex items-center justify-center gap-2 cursor-pointer text-xs">
+          <i data-lucide="key-round" class="w-4 h-4"></i>
+          <span>Switch to Admin Account</span>
+        </button>
+        <button type="button" onclick="closeAccessDeniedModal()" class="w-full sm:w-auto py-2.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl cursor-pointer text-xs transition-colors">
+          Dismiss
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- APPLICATION CORE JAVASCRIPT WITH CACHE BUST -->
+  <script src="app.js?v=20260928_03"></script>
+</body>
+</html>
